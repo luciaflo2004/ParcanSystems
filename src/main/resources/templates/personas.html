@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Personas - Sistema Parcan</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f9; }
+        .sidebar { width: 240px; background: #2c2c2c; color: white; position: fixed; height: 100%; padding-top: 20px; }
+        .sidebar h2 { text-align: center; color: #f0b429; }
+        .sidebar a { display: block; padding: 12px 25px; color: #ddd; text-decoration: none; }
+        .sidebar a:hover, .sidebar a.active { background: #3a3a3a; color: white; }
+        .content { margin-left: 240px; padding: 20px; }
+        .header { background: #34495e; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Estilos para mensajes */
+        .alert-success { background: #d4edda; color: #155724; padding: 12px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #34495e; color: white; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        input:focus { outline: none; border-color: #3498db; }
+        button { padding: 12px 25px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #229954; }
+        .btn-eliminar { color: #e74c3c; text-decoration: none; }
+        .btn-eliminar:hover { text-decoration: underline; }
+        .btn-editar { color: #3498db; text-decoration: none; }
+        .btn-editar:hover { text-decoration: underline; }
+        .buscar-box { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Parcan Systems</h2>
+        <a th:href="@{/home}">Inicio</a>
+        <a th:href="@{/personas}" class="active">Personas</a>
+        <a th:href="@{/feligreses}">Feligreses</a>
+        <a th:href="@{/solicitudes}">Solicitudes</a>
+        <a th:href="@{/servicios}">Servicios Eclesiales</a>
+        <a th:href="@{/logout}" style="color:#e74c3c; margin-top:30px;">Cerrar Sesión</a>
+    </div>
+
+    <div class="content">
+        <div class="header">
+			 <h1>Gestión de Personas</h1>
+			        
+			        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+			        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+			        
+			        <div class="form-container">
+			            <h2>Registrar/Editar Persona</h2>
+			            
+			            <form th:action="${personaDTO.idPersona == null} ? @{/personas/guardar} : @{/personas/actualizar/{id}(id=${personaDTO.idPersona})}" 
+			                  th:object="${personaDTO}" method="post">
+			                
+			                <div class="form-group">
+			                    <label for="ci">Cédula / CI (Solo números, 6-8 dígitos):</label>
+			                    <input type="text" id="ci" th:field="*{ci}" 
+			                           pattern="[0-9]{6,8}" 
+			                           title="Ingrese solo números, entre 6 y 8 dígitos"
+			                           required>
+			                    <div th:if="${#fields.hasErrors('ci')}" class="error" th:errors="*{ci}"></div>
+			                </div>
+			                
+			                <div class="form-group">
+			                    <label for="nombre">Nombre:</label>
+			                    <input type="text" id="nombre" th:field="*{nombre}" required>
+			                    <div th:if="${#fields.hasErrors('nombre')}" class="error" th:errors="*{nombre}"></div>
+			                </div>
+			                
+			                <div class="form-group">
+			                    <label for="apellido">Apellido:</label>
+			                    <input type="text" id="apellido" th:field="*{apellido}" required>
+			                    <div th:if="${#fields.hasErrors('apellido')}" class="error" th:errors="*{apellido}"></div>
+			                </div>
+			                
+			                <div class="form-group">
+			                    <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+			                    <input type="date" id="fechaNacimiento" th:field="*{fechaNacimiento}" required>
+			                    <div th:if="${#fields.hasErrors('fechaNacimiento')}" class="error" th:errors="*{fechaNacimiento}"></div>
+			                </div>
+			                
+			                <div class="form-group">
+			                    <label for="direccion">Dirección:</label>
+			                    <input type="text" id="direccion" th:field="*{direccion}">
+			                    <div th:if="${#fields.hasErrors('direccion')}" class="error" th:errors="*{direccion}"></div>
+			                </div>
+			                
+			                <div class="form-group">
+			                    <label for="telefono">Teléfono:</label>
+			                    <input type="tel" id="telefono" th:field="*{telefono}" pattern="[0-9]*">
+			                    <div th:if="${#fields.hasErrors('telefono')}" class="error" th:errors="*{telefono}"></div>
+			                </div>
+			                
+			                <div class="button-group">
+			                    <button type="submit" class="btn btn-primary">Guardar Persona</button>
+			                    <a href="/personas" class="btn btn-secondary">Cancelar</a>
+			                </div>
+			            </form>
+			        </div>
+			    </div>
+			</body>
+			</html>
+
+        <div class="card">
+            <h2>Personas Registradas</h2>
+            
+            <!-- Búsqueda -->
+            <div class="buscar-box">
+                <form th:action="@{/personas/buscar}" method="get">
+                    <div class="form-grid">
+                        <div>
+                            <label>Buscar por Nombre</label>
+                            <input type="text" name="nombre" placeholder="Ingrese nombre...">
+                        </div>
+                        <div>
+                            <label>Buscar por Apellido</label>
+                            <input type="text" name="apellido" placeholder="Ingrese apellido...">
+                        </div>
+                    </div>
+                    <button type="submit" style="background:#3498db; margin-top:10px;">Buscar</button>
+                    <a th:href="@{/personas}" style="margin-left:10px;">Limpiar búsqueda</a>
+                </form>
+            </div>
+            
+            <div style="max-height: 500px; overflow-y: auto;">
+                <table th:if="${not #lists.isEmpty(personas)}">
+                    <thead>
+                        <tr>
+                            <th>CI</th>
+                            <th>Nombre Completo</th>
+                            <th>Fecha Nac.</th>
+                            <th>Teléfono</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${personas}">
+                            <td th:text="${p.ciPersona}"></td>
+                            <td th:text="${p.nombrePersona} + ' ' + ${p.apellidoPersona}"></td>
+                            <td th:text="${#temporals.format(p.fechaNacPersona, 'dd/MM/yyyy')}"></td>
+                            <td th:text="${p.telefonoPersona}"></td>
+                            <td>
+                                <a th:href="@{/personas/editar/{id}(id=${p.ciPersona})}" 
+                                   class="btn-editar">Editar</a>
+                                |
+                                <a th:href="@{/personas/eliminar/{id}(id=${p.ciPersona})}" 
+                                   class="btn-eliminar"
+                                   onclick="return confirm('¿Está seguro de eliminar a ${p.nombrePersona} ${p.apellidoPersona}?')">Eliminar</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div th:if="${#lists.isEmpty(personas)}" style="text-align:center; padding:40px;">
+                    No hay personas registradas
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva Solicitud - Parcan Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+        }
+
+        /* Menú Lateral (mismo que en solicitudes.html) */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            padding: 25px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .logo h2 {
+            color: white;
+            font-size: 22px;
+        }
+
+        .logo p {
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin: 5px 15px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background: rgba(255,255,255,0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .dropdown-menu {
+            margin-left: 35px;
+            display: none;
+        }
+
+        .nav-item.active .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 8px 15px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .dropdown-menu a:hover {
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .arrow {
+            margin-left: auto;
+            transition: transform 0.3s;
+        }
+
+        .nav-item.active .arrow {
+            transform: rotate(180deg);
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 20px;
+            min-height: 100vh;
+            width: calc(100% - 280px);
+        }
+
+        .content-header {
+            margin-bottom: 30px;
+        }
+
+        .content-header h1 {
+            font-size: 28px;
+            color: #333;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 800px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        label.required:after {
+            content: " *";
+            color: red;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .user-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Menú Lateral -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>⛪ Parcan Systems</h2>
+            <p>Sistema de Gestión Parroquial</p>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/dashboard" class="nav-link">🏠 Inicio</a>
+            </li>
+            <li class="nav-item" onclick="toggleSubmenu(this)">
+                <a href="#" class="nav-link">👥 Personas <span class="arrow">▼</span></a>
+                <div class="dropdown-menu">
+                    <a href="/personas/lista">📋 Lista de Personas</a>
+                    <a href="/personas/nuevo">➕ Nueva Persona</a>
+                    <a href="/feligreses/lista">🙏 Feligreses</a>
+                    <a href="/funcionarios/lista">👔 Funcionarios</a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="/solicitudes" class="nav-link active">📋 Solicitudes</a>
+            </li>
+            <li class="nav-item" onclick="toggleSubmenu(this)">
+                <a href="#" class="nav-link">⛪ Servicios <span class="arrow">▼</span></a>
+                <div class="dropdown-menu">
+                    <a href="/servicios/lista">📋 Lista de Servicios</a>
+                    <a href="/servicios/nuevo">➕ Nuevo Servicio</a>
+                </div>
+            </li>
+            <li class="nav-item" onclick="toggleSubmenu(this)">
+                <a href="#" class="nav-link">🏛️ Instituciones <span class="arrow">▼</span></a>
+                <div class="dropdown-menu">
+                    <a href="/instituciones/lista">📋 Lista de Instituciones</a>
+                    <a href="/instituciones/nuevo">➕ Nueva Institución</a>
+                </div>
+            </li>
+            <li class="nav-item" onclick="toggleSubmenu(this)">
+                <a href="#" class="nav-link">📊 Reportes <span class="arrow">▼</span></a>
+                <div class="dropdown-menu">
+                    <a href="/reportes/solicitudes">📋 Reporte de Solicitudes</a>
+                    <a href="/reportes/servicios">⛪ Reporte de Servicios</a>
+                    <a href="/reportes/personas">👥 Reporte de Personas</a>
+                </div>
+            </li>
+        </ul>
+
+        <div class="user-info">
+            <div>👤 <span th:text="${#authentication.name}">Usuario</span></div>
+            <a href="/logout" class="logout-btn">🚪 Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="main-content">
+        <div class="content-header">
+            <h1>➕ Nueva Solicitud</h1>
+        </div>
+
+        <div class="form-container">
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+            <form th:action="@{/solicitudes/guardar}" th:object="${solicitud}" method="post">
+                <div class="form-group">
+                    <label for="feligresId" class="required">Feligrés</label>
+                    <select id="feligresId" name="feligresId" required>
+                        <option value="">Seleccione un feligrés</option>
+                        <option th:each="feligres : ${feligreses}" 
+                                th:value="${feligres.idPersona}"
+                                th:text="${feligres.persona.nombrePersona} + ' ' + ${feligres.persona.apellidoPersona} + ' (CI: ' + ${feligres.persona.ci} + ')'"></option>
+                    </select>
+                    <div class="info-text">Seleccione el feligrés que realiza la solicitud</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="servicioId">Servicio Eclesial</label>
+                    <select id="servicioId" name="servicioId">
+                        <option value="">Seleccione un servicio (opcional)</option>
+                        <option th:each="servicio : ${servicios}" 
+                                th:value="${servicio.idServicio}"
+                                th:text="${servicio.nombreServicio} + ' - ' + ${servicio.descripcion}"></option>
+                    </select>
+                    <div class="info-text">Opcional - Solo si la solicitud está relacionada a un servicio</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tipoSolicitud" class="required">Tipo de Solicitud</label>
+                    <select id="tipoSolicitud" th:field="*{tipoSolicitud}" required>
+                        <option value="">Seleccione un tipo</option>
+                        <option th:each="tipo : ${tiposSolicitud}" 
+                                th:value="${tipo}"
+                                th:text="${tipo}"></option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion" class="required">Descripción</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" 
+                              placeholder="Describa detalladamente la solicitud..." required></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">✅ Guardar Solicitud</button>
+                    <button type="button" class="btn-secondary" onclick="window.location.href='/solicitudes'">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleSubmenu(element) {
+            element.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

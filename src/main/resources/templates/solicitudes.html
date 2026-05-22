@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Solicitudes - Parcan Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+        }
+
+        /* Menú Lateral */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            padding: 25px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .logo h2 {
+            color: white;
+            font-size: 22px;
+        }
+
+        .logo p {
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin: 5px 15px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background: rgba(255,255,255,0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .dropdown-menu {
+            margin-left: 35px;
+            display: none;
+        }
+
+        .nav-item.active .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 8px 15px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .dropdown-menu a:hover {
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .arrow {
+            margin-left: auto;
+            transition: transform 0.3s;
+        }
+
+        .nav-item.active .arrow {
+            transform: rotate(180deg);
+        }
+
+        /* Contenido principal */
+        .main-content {
+            margin-left: 280px;
+            padding: 20px;
+            min-height: 100vh;
+            width: calc(100% - 280px);
+        }
+
+        /* Header del contenido */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .content-header h1 {
+            font-size: 28px;
+            color: #333;
+        }
+
+        .btn-nuevo {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .btn-nuevo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Estadísticas */
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 150px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* Tabla */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tbody tr:hover {
+            background: #f5f5f5;
+        }
+
+        .estado {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .estado-PENDIENTE { background: #fff3cd; color: #856404; }
+        .estado-APROBADA { background: #d4edda; color: #155724; }
+        .estado-RECHAZADA { background: #f8d7da; color: #721c24; }
+        .estado-COMPLETADA { background: #cce5ff; color: #004085; }
+
+        .acciones {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-accion {
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-editar { background: #007bff; color: white; }
+        .btn-eliminar { background: #dc3545; color: white; }
+
+        select.estado-select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .user-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Menú Lateral -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>⛪ Parcan Systems</h2>
+            <p>Sistema de Gestión Parroquial</p>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/dashboard" class="nav-link">
+                    🏠 Inicio
+                </a>
+            </li>
+
+            <li class="nav-item" onclick="toggleSubmenu(this)">
+                <a href="#" class="nav-link">
+                    👥 Personas <span class="arrow">▼</span>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="/personas/lista">📋 Lista de Personas</a>
+                    <a href="/personas/nuevo">➕ Nueva Persona</a>
+                    <a href="/feligreses/lista">🙏 Feligreses</a>
+                    <a href="/funcionarios/lista">👔 Funcionarios</a>
+                </div>
+            </li>
+
+            <li class="nav-item">
+                <a href="/solicitudes" class="nav-link active">
+                    📋 Solicitudes
+                </a>
+            </li>
+
+            <li class="nav-item" onclick="toggleSubmenu(this)">
+                <a href="#" class="nav-link">
+                    ⛪ Servicios <span class="arrow">▼</span>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="/servicios/lista">📋 Lista de Servicios</a>
+                    <a href="/servicios/nuevo">➕ Nuevo Servicio</a>
+                </div>
+            </li>
+
+            <li class="nav-item" onclick="toggleSubmenu(this)">
+                <a href="#" class="nav-link">
+                    🏛️ Instituciones <span class="arrow">▼</span>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="/instituciones/lista">📋 Lista de Instituciones</a>
+                    <a href="/instituciones/nuevo">➕ Nueva Institución</a>
+                </div>
+            </li>
+
+            <li class="nav-item" onclick="toggleSubmenu(this)">
+                <a href="#" class="nav-link">
+                    📊 Reportes <span class="arrow">▼</span>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="/reportes/solicitudes">📋 Reporte de Solicitudes</a>
+                    <a href="/reportes/servicios">⛪ Reporte de Servicios</a>
+                    <a href="/reportes/personas">👥 Reporte de Personas</a>
+                </div>
+            </li>
+        </ul>
+
+        <div class="user-info">
+            <div>👤 <span th:text="${#authentication.name}">Usuario</span></div>
+            <a href="/logout" class="logout-btn">🚪 Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="main-content">
+        <div class="content-header">
+            <h1>📋 Gestión de Solicitudes</h1>
+            <a href="/solicitudes/nueva" class="btn-nuevo">➕ Nueva Solicitud</a>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>📊 Total Solicitudes</h3>
+                <div class="number" th:text="${totalSolicitudes}">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>⏳ Pendientes</h3>
+                <div class="number" th:text="${totalPendientes}">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>✅ Aprobadas</h3>
+                <div class="number" th:text="${totalAprobadas}">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>❌ Rechazadas</h3>
+                <div class="number" th:text="${totalRechazadas}">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>🎉 Completadas</h3>
+                <div class="number" th:text="${totalCompletadas}">0</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Feligrés</th>
+                        <th>Tipo</th>
+                        <th>Descripción</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="solicitud : ${solicitudes}">
+                        <td th:text="${solicitud.idSolicitud}"></td>
+                        <td th:text="${solicitud.persona.persona.nombrePersona} + ' ' + ${solicitud.persona.persona.apellidoPersona}"></td>
+                        <td th:text="${solicitud.tipoSolicitud}"></td>
+                        <td th:text="${solicitud.descripcion}"></td>
+                        <td th:text="${#temporals.format(solicitud.fechaSolicitud, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td>
+                            <span th:class="'estado ' + 'estado-' + ${solicitud.estado}" th:text="${solicitud.estado}"></span>
+                        </td>
+                        <td class="acciones">
+                            <a th:href="@{/solicitudes/editar/{id}(id=${solicitud.idSolicitud})}" class="btn-accion btn-editar">✏️ Editar</a>
+                            <a th:href="@{/solicitudes/eliminar/{id}(id=${solicitud.idSolicitud})}" 
+                               class="btn-accion btn-eliminar"
+                               onclick="return confirm('¿Está seguro de eliminar esta solicitud?')">🗑️ Eliminar</a>
+                            <form th:action="@{/solicitudes/cambiar-estado/{id}(id=${solicitud.idSolicitud})}" method="get" style="display: inline;">
+                                <select name="estado" class="estado-select" onchange="this.form.submit()">
+                                    <option th:each="estado : ${tiposEstado}"
+                                            th:value="${estado}"
+                                            th:text="${estado}"
+                                            th:selected="${estado == solicitud.estado}">
+                                    </option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${solicitudes.empty}">
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            No hay solicitudes registradas
+                            <br><br>
+                            <a href="/solicitudes/nueva" style="color: #667eea;">➕ Crear primera solicitud</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function toggleSubmenu(element) {
+            element.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
