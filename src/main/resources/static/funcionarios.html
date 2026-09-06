@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SystemParCan - Funcionarios</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="main-content">
+        <div class="content">
+            <div class="page-head">
+                <h3>Funcionarios Registrados</h3>
+                <div class="head-actions">
+                    <a class="btn btn-primary" href="personas.html"><i class="fa-solid fa-plus"></i> Nuevo</a>
+                </div>
+            </div>
+            <div class="filter-bar">
+                <div class="f-group"><label>Buscar texto</label><input type="text" id="search-funcionarios" placeholder="CI, persona, cargo..."></div>
+                <div class="f-group"><label>Estado</label>
+                    <select id="filtro-estado">
+                        <option value="todos">Todos</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline" onclick="clearFiltrosFuncionarios()"><i class="fa-solid fa-eraser"></i> Limpiar</button>
+                <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir</button>
+            </div>
+
+            <!-- Lista de funcionarios -->
+            <div class="card print-area">
+                <h3>Lista de Funcionarios</h3>
+                <div id="funcionarios-list">Cargando...</div>
+            </div>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+    <script src="js/funcionarios.js"></script>
+</body>
+</html>

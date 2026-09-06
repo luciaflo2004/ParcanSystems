@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SystemParCan - Solicitudes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="main-content">
+        <div class="content">
+            <div class="page-head">
+                <h3>Solicitudes Registradas</h3>
+                <div class="head-actions">
+                    <button class="btn btn-primary" onclick="resetSolicitudForm()"><i class="fa-solid fa-plus"></i> Nuevo</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 id="form-title">Registrar Solicitud</h3>
+                <form id="solicitud-form">
+                    <div class="form-group"><label>Detalle:</label><input type="text" name="detalle" id="detalle" required></div>
+                    <div class="form-group"><label>Fecha Solicitud:</label><input type="date" name="fechaSolicitud" id="fechaSolicitud"></div>
+                    <div class="form-group"><label>Estado:</label><input type="text" name="estadoSolicitud" id="estadoSolicitud" placeholder="Pendiente, Aprobada, etc."></div>
+                    <div class="form-group"><label>Feligres CI:</label><select name="feligres.ciPersona" id="feligres-select"></select></div>
+                    <div class="form-actions">
+                        <button type="submit" id="submit-btn" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                        <button type="button" class="btn btn-outline" onclick="resetSolicitudForm()"><i class="fa-solid fa-rotate-left"></i> Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Barra de filtros y boton imprimir, como encabezado de la lista -->
+            <div class="filter-bar">
+                <div class="f-group"><label>Buscar texto</label><input type="text" id="search-solicitudes" placeholder="Detalle, feligrés..."></div>
+                <div class="f-group"><label>Estado</label>
+                    <select id="filtro-estado">
+                        <option value="todos">Todos</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline" onclick="clearFiltrosSolicitudes()"><i class="fa-solid fa-eraser"></i> Limpiar</button>
+                <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir</button>
+            </div>
+
+            <div class="card print-area">
+                <h3>Lista de Solicitudes</h3>
+                <div id="solicitudes-list">Cargando...</div>
+            </div>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+    <script src="js/solicitudes.js"></script>
+</body>
+</html>
