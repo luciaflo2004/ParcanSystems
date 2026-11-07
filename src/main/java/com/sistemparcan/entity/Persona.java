@@ -1,7 +1,15 @@
 package com.sistemparcan.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "Persona")
@@ -28,6 +36,19 @@ public class Persona {
 
     @Column(name = "eliminado", nullable = false)
     private Boolean eliminado = false;
+
+    // Fecha de registro: se usa para mantener el orden de inscripcion en la lista
+    @Column(name = "fecha_registro", nullable = true)
+    private LocalDateTime fechaRegistro;
+
+    // Campos transitorios (no se guardan): se usan en el registro unificado (rol y cargo)
+    // WRITE_ONLY: se leen del request pero no se devuelven en las respuestas
+    @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String rol;
+    @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private Integer cargo;
 
     public Persona() {
     }
@@ -97,6 +118,30 @@ public class Persona {
 
     public void setEliminado(Boolean eliminado) {
         this.eliminado = eliminado;
+    }
+
+    public LocalDateTime getFechaRegistro() {
+        return fechaRegistro;
+    }
+
+    public void setFechaRegistro(LocalDateTime fechaRegistro) {
+        this.fechaRegistro = fechaRegistro;
+    }
+
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
+    }
+
+    public Integer getCargo() {
+        return cargo;
+    }
+
+    public void setCargo(Integer cargo) {
+        this.cargo = cargo;
     }
 
     @PrePersist

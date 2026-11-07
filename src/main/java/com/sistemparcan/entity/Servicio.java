@@ -1,8 +1,18 @@
 package com.sistemparcan.entity;
 
-import jakarta.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "Servicio")
@@ -19,31 +29,44 @@ public class Servicio {
     @Column(name = "CostoServicio")
     private Integer costoServicio;
 
+    // Solicitud a la que pertenece este servicio (una solicitud puede tener varios servicios).
+    // Se guarda el id de la solicitud existente mediante una clave foranea.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Solicitud_codSolicitud")
+    @JsonIgnoreProperties({"servicios"})
+    private Solicitud solicitud;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Funcionario_ciPersona")
+    @JsonIgnoreProperties({"servicios", "solicitudes"})
     private Funcionario funcionario;
 
     @Column(name = "EstadoServicio", length = 45)
     private String estadoServicio;
 
+    // Estado como booleano: true = Realizado, false = Pendiente
+    @Column(name = "realizado", nullable = true)
+    private Boolean realizado = false;
+
+    // Fecha en que se realizo el servicio
+    @Column(name = "fecha_realizacion", nullable = true)
+    private LocalDate fechaRealizacion;
+
     @Column(name = "eliminado", nullable = false)
     private Boolean eliminado = false;
-
-    @ManyToMany(mappedBy = "servicios", fetch = FetchType.LAZY)
-    private Set<Solicitud> solicitudes = new HashSet<>();
 
     public Servicio() {
     }
 
-    public Servicio(Integer codServicio, String detalleServicio, Integer costoServicio, Funcionario funcionario,
-            String estadoServicio, Boolean eliminado, Set<Solicitud> solicitudes) {
+    public Servicio(Integer codServicio, String detalleServicio, Integer costoServicio, Solicitud solicitud,
+            Funcionario funcionario, String estadoServicio, Boolean eliminado) {
         this.codServicio = codServicio;
         this.detalleServicio = detalleServicio;
         this.costoServicio = costoServicio;
+        this.solicitud = solicitud;
         this.funcionario = funcionario;
         this.estadoServicio = estadoServicio;
         this.eliminado = eliminado;
-        this.solicitudes = solicitudes;
     }
 
     public Integer getCodServicio() {
@@ -70,6 +93,14 @@ public class Servicio {
         this.costoServicio = costoServicio;
     }
 
+    public Solicitud getSolicitud() {
+        return solicitud;
+    }
+
+    public void setSolicitud(Solicitud solicitud) {
+        this.solicitud = solicitud;
+    }
+
     public Funcionario getFuncionario() {
         return funcionario;
     }
@@ -86,6 +117,22 @@ public class Servicio {
         this.estadoServicio = estadoServicio;
     }
 
+    public Boolean getRealizado() {
+        return realizado;
+    }
+
+    public void setRealizado(Boolean realizado) {
+        this.realizado = realizado;
+    }
+
+    public LocalDate getFechaRealizacion() {
+        return fechaRealizacion;
+    }
+
+    public void setFechaRealizacion(LocalDate fechaRealizacion) {
+        this.fechaRealizacion = fechaRealizacion;
+    }
+
     public Boolean getEliminado() {
         return eliminado;
     }
@@ -94,18 +141,13 @@ public class Servicio {
         this.eliminado = eliminado;
     }
 
-    public Set<Solicitud> getSolicitudes() {
-        return solicitudes;
-    }
-
-    public void setSolicitudes(Set<Solicitud> solicitudes) {
-        this.solicitudes = solicitudes;
-    }
-
     @PrePersist
     public void prePersist() {
         if (eliminado == null) {
             eliminado = false;
+        }
+        if (realizado == null) {
+            realizado = false;
         }
     }
 }

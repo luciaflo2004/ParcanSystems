@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SystemParCan - Solicitudes</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
     <div class="main-content">
@@ -20,10 +20,39 @@
             <div class="card">
                 <h3 id="form-title">Registrar Solicitud</h3>
                 <form id="solicitud-form">
+                    <!-- Tipo de solicitante: define si la solicitud es de un feligrés o de una institución -->
+                    <div class="form-group">
+                        <label>Tipo de solicitante:</label>
+                        <select id="tipo-solicitante">
+                            <option value="">Seleccione una opción...</option>
+                            <option value="FELIGRES">Feligres</option>
+                            <option value="INSTITUCION">Institución eclesiástica</option>
+                        </select>
+                    </div>
+                    <!-- Desplegable de feligreses: se muestra solo al elegir Feligres -->
+                    <div class="form-group hidden" id="feligres-group">
+                        <label>Feligrés:</label>
+                        <div class="solicitante-row">
+                            <select id="feligres-select"></select>
+                            <button type="button" class="btn btn-outline" onclick="crearNuevaPersona()"><i class="fa-solid fa-plus"></i> Crear nuevo</button>
+                        </div>
+                    </div>
+                    <!-- Desplegable de instituciones: se muestra solo al elegir Institución eclesiástica -->
+                    <div class="form-group hidden" id="institucion-group">
+                        <label>Institución eclesiástica:</label>
+                        <div class="solicitante-row">
+                            <select id="institucion-select"></select>
+                            <button type="button" class="btn btn-outline" onclick="crearNuevaInstitucion()"><i class="fa-solid fa-plus"></i> Crear nuevo</button>
+                        </div>
+                    </div>
                     <div class="form-group"><label>Detalle:</label><input type="text" name="detalle" id="detalle" required></div>
                     <div class="form-group"><label>Fecha Solicitud:</label><input type="date" name="fechaSolicitud" id="fechaSolicitud"></div>
-                    <div class="form-group"><label>Estado:</label><input type="text" name="estadoSolicitud" id="estadoSolicitud" placeholder="Pendiente, Aprobada, etc."></div>
-                    <div class="form-group"><label>Feligres CI:</label><select name="feligres.ciPersona" id="feligres-select"></select></div>
+                    <div class="form-group"><label>Estado:</label>
+                        <select name="aprobada" id="aprobada">
+                            <option value="false">Pendiente</option>
+                            <option value="true">Aprobada</option>
+                        </select>
+                    </div>
                     <div class="form-actions">
                         <button type="submit" id="submit-btn" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
                         <button type="button" class="btn btn-outline" onclick="resetSolicitudForm()"><i class="fa-solid fa-rotate-left"></i> Cancelar</button>
@@ -33,12 +62,12 @@
 
             <!-- Barra de filtros y boton imprimir, como encabezado de la lista -->
             <div class="filter-bar">
-                <div class="f-group"><label>Buscar texto</label><input type="text" id="search-solicitudes" placeholder="Detalle, feligrés..."></div>
+                <div class="f-group"><label>Buscar texto</label><input type="text" id="search-solicitudes" placeholder="Detalle, solicitante..."></div>
                 <div class="f-group"><label>Estado</label>
                     <select id="filtro-estado">
                         <option value="todos">Todos</option>
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
+                        <option value="aprobada">Aprobada</option>
+                        <option value="pendiente">Pendiente</option>
                     </select>
                 </div>
                 <button class="btn btn-outline" onclick="clearFiltrosSolicitudes()"><i class="fa-solid fa-eraser"></i> Limpiar</button>
@@ -51,7 +80,7 @@
             </div>
         </div>
     </div>
-    <script src="js/app.js"></script>
-    <script src="js/solicitudes.js"></script>
+    <script src="js/app.js?v=2"></script>
+    <script src="js/solicitudes.js?v=2"></script>
 </body>
 </html>

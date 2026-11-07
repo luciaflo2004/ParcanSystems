@@ -167,6 +167,39 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
+        // Validar campos con restricciones
+        const ci = document.getElementById('ciPersona').value;
+        const nombre = document.getElementById('nombrePersona').value;
+        const apellido = document.getElementById('apellidoPersona').value;
+        const telefono = document.getElementById('telefonoPersona').value;
+
+        if (!/^[0-9]{6,}$/.test(ci)) {
+            showAlert('La cédula debe tener mínimo 6 números y no letras', 'error');
+            return;
+        }
+        // Nombre: solo letras y espacios, sin numeros ni signos; minimo 2 letras
+        if (!/^[A-Za-zÀ-ÿ ]+$/.test(nombre)) {
+            showAlert('El nombre solo debe contener letras y espacios', 'error');
+            return;
+        }
+        if ((nombre.replace(/[^A-Za-zÀ-ÿ]/g, '')).length < 2) {
+            showAlert('El nombre debe tener mínimo 2 letras', 'error');
+            return;
+        }
+        // Apellido: solo letras y espacios, sin numeros ni signos; minimo 2 letras
+        if (!/^[A-Za-zÀ-ÿ ]+$/.test(apellido)) {
+            showAlert('El apellido solo debe contener letras y espacios', 'error');
+            return;
+        }
+        if ((apellido.replace(/[^A-Za-zÀ-ÿ]/g, '')).length < 2) {
+            showAlert('El apellido debe tener mínimo 2 letras', 'error');
+            return;
+        }
+        if (telefono && !/^[0-9]{10,}$/.test(telefono)) {
+            showAlert('El teléfono debe tener mínimo 10 números y no letras', 'error');
+            return;
+        }
+
         // Construir el objeto con datos personales + rol + cargo
         const fd = new FormData(this);
         const obj = {};
@@ -181,6 +214,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             const res = await fetch(url, { method: method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(obj) });
             if (res.ok) {
                 showAlert(editingCi ? 'Registro actualizado correctamente' : 'Registro guardado correctamente', 'success');
+                // Si se llego desde Solicitudes para crear un solicitante, se regresa con el nuevo registro
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('origen') === 'solicitudes') {
+                    const saved = await res.json();
+                    localStorage.setItem('spc_nuevo_solicitante', JSON.stringify({ tipo: 'FELIGRES', id: saved.ciPersona }));
+                    window.location.href = 'solicitudes.html';
+                    return;
+                }
                 this.reset();
                 editingCi = null;
                 cargoGroup.classList.add('hidden');

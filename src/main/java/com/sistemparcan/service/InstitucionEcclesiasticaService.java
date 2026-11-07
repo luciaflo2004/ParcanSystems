@@ -1,11 +1,12 @@
 package com.sistemparcan.service;
 
-import com.sistemparcan.entity.InstitucionEcclesiastica;
-import com.sistemparcan.repository.InstitucionEcclesiasticaRepository;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import com.sistemparcan.entity.InstitucionEcclesiastica;
+import com.sistemparcan.repository.InstitucionEcclesiasticaRepository;
 
 @Service
 public class InstitucionEcclesiasticaService {

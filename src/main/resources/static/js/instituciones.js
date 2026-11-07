@@ -52,7 +52,7 @@ function editarInstitucion(id) {
     const i = institucionesData.find(x => x.idInstitucionEclesiastica === id);
     if (!i) return;
     editingInstitucion = id;
-    document.getElementById('diosesis').value = i.diocese || '';
+    document.getElementById('diocese').value = i.diocese || '';
     document.getElementById('nombre').value = i.nombre || '';
     document.getElementById('tipo').value = i.tipo || '';
     document.getElementById('ciudad').value = i.ciudad || '';
@@ -99,6 +99,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         const res = await fetch(url, { method: method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(obj) });
         if (res.ok) {
             showAlert(editingInstitucion ? 'Institución actualizada' : 'Institución registrada', 'success');
+            // Si se llego desde Solicitudes para crear un solicitante, se regresa con el nuevo registro
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('origen') === 'solicitudes') {
+                const saved = await res.json();
+                localStorage.setItem('spc_nuevo_solicitante', JSON.stringify({ tipo: 'INSTITUCION', id: saved.idInstitucionEclesiastica }));
+                window.location.href = 'solicitudes.html';
+                return;
+            }
             this.reset();
             editingInstitucion = null;
             document.getElementById('form-title').textContent = 'Registrar Institución';

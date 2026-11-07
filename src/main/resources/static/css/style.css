@@ -149,6 +149,11 @@ a.btn-outline { color: #334155; }
 }
 .form-actions { display: flex; gap: 10px; margin-top: 20px; }
 
+/* Fila que alinea el desplegable del solicitante con el boton "Crear nuevo" */
+.solicitante-row { display: flex; gap: 8px; align-items: center; }
+.solicitante-row select { flex: 1; }
+.solicitante-row .btn { white-space: nowrap; }
+
 /* ---------- Filter bar ---------- */
 .filter-bar {
     background: #fff;

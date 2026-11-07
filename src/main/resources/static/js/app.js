@@ -21,12 +21,14 @@ const sidebarHTML = `<nav class="sidebar-nav">
 </ul></nav>`;
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Si no existe el menu lateral, se inyecta al inicio del body
     if (!document.querySelector('.sidebar-nav')) {
         document.body.insertAdjacentHTML('afterbegin', sidebarHTML);
     }
     highlightActive();
 });
 
+// Resalta en el menu el enlace de la pagina actual
 function highlightActive() {
     const path = window.location.pathname.split('/').pop();
     document.querySelectorAll('.nav-list a').forEach(a => {
@@ -35,6 +37,7 @@ function highlightActive() {
     });
 }
 
+// Obtiene datos de la API en formato JSON; si falla devuelve un arreglo vacio
 async function fetchAll(url) {
     try {
         const res = await fetch(API + url);
@@ -45,6 +48,7 @@ async function fetchAll(url) {
     }
 }
 
+// Muestra un mensaje temporal (exito o error) en la parte superior del contenido
 function showAlert(msg, type) {
     const div = document.createElement('div');
     div.className = type === 'success' ? 'alert-success' : 'alert-error';
@@ -54,6 +58,7 @@ function showAlert(msg, type) {
     setTimeout(() => div.remove(), 3000);
 }
 
+// (Legado) Filtra las filas de una tabla por texto en el DOM
 function bindSearch(inputId, containerId) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -66,12 +71,14 @@ function bindSearch(inputId, containerId) {
     });
 }
 
+// (Legado) Limpia el filtro de texto de una tabla
 function clearSearch(inputId, containerId) {
     const input = document.getElementById(inputId);
     if (input) input.value = '';
     document.querySelectorAll('#' + containerId + ' tbody tr').forEach(r => r.style.display = '');
 }
 
+// Construye una tabla HTML dentro de un contenedor y la muestra
 function renderTable(containerId, headers, rows, actions) {
     const container = document.getElementById(containerId);
     if (!rows || rows.length === 0) {
