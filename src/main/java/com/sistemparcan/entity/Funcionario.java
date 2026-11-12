@@ -3,6 +3,7 @@ package com.sistemparcan.entity;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+// Funcionario de la parroquia; comparte la cedula con la persona que lo representa
 @Entity
 @Table(name = "Funcionario")
 public class Funcionario {
@@ -23,6 +25,7 @@ public class Funcionario {
     @Column(name = "ciPersona")
     private Integer ciPersona;
 
+    // Cargo que desempena el funcionario
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Cargo_codCargo")
     private Cargo cargo;
@@ -30,18 +33,23 @@ public class Funcionario {
     @Column(name = "eliminado", nullable = false)
     private Boolean eliminado = false;
 
+    // Persona que contiene los datos personales del funcionario
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Persona_ciPersona", referencedColumnName = "ciPersona")
     private Persona persona;
 
+    // Servicios asignados a este funcionario
     @OneToMany(mappedBy = "funcionario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("funcionario")
     private Set<Servicio> servicios = new HashSet<>();
 
+    // Solicitudes registradas por este funcionario
     @OneToMany(mappedBy = "funcionario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("funcionario")
     private Set<Solicitud> solicitudes = new HashSet<>();
 
+    // Constructor vacio para que Jackson pueda convertir el JSON recibido
+    @JsonCreator
     public Funcionario() {
     }
 

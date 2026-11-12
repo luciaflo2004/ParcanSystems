@@ -7,7 +7,8 @@ function renderInstituciones() {
     const texto = (document.getElementById('search-instituciones').value || '').toLowerCase();
     const estadoF = document.getElementById('filtro-estado').value;
 
-    const rows = institucionesData.filter(i => {
+    // Ordena las instituciones por ID ascendente
+    const rows = ordenarPorId(institucionesData.filter(i => {
         const bloque = [
             i.nombre || '',
             i.diocese || '',
@@ -18,7 +19,7 @@ function renderInstituciones() {
         const estado = i.eliminado ? 'inactivo' : 'activo';
         if (estadoF !== 'todos' && estado !== estadoF) return false;
         return true;
-    }).map(i => ({
+    }), 'idInstitucionEclesiastica').map(i => ({
         ID: i.idInstitucionEclesiastica,
         Nombre: i.nombre,
         Tipo: i.tipo,
@@ -48,10 +49,12 @@ function clearFiltrosInstituciones() {
     renderInstituciones();
 }
 
+// Carga los datos de la institucion seleccionada en el formulario
 function editarInstitucion(id) {
     const i = institucionesData.find(x => x.idInstitucionEclesiastica === id);
     if (!i) return;
     editingInstitucion = id;
+    limpiarErroresFormulario(document.getElementById('institucion-form'));
     document.getElementById('diocese').value = i.diocese || '';
     document.getElementById('nombre').value = i.nombre || '';
     document.getElementById('tipo').value = i.tipo || '';
@@ -61,9 +64,11 @@ function editarInstitucion(id) {
     document.getElementById('institucion-form').scrollIntoView({ behavior: 'smooth' });
 }
 
+// Limpia el formulario para registrar una institucion nueva
 function resetInstitucionForm() {
     editingInstitucion = null;
     document.getElementById('institucion-form').reset();
+    limpiarErroresFormulario(document.getElementById('institucion-form'));
     document.getElementById('form-title').textContent = 'Registrar Institución';
     document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
 }
@@ -88,8 +93,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('search-instituciones').addEventListener('input', renderInstituciones);
     document.getElementById('filtro-estado').addEventListener('change', renderInstituciones);
 
+    // Envia los datos de la institucion al backend
     document.getElementById('institucion-form').addEventListener('submit', async function(e) {
         e.preventDefault();
+        const form = this;
+        limpiarErroresFormulario(form);
+        const errores = erroresValidacionNativa(form);
+        if (errores.length) {
+            mostrarErroresFormulario(form, errores);
+            return;
+        }
         const fd = new FormData(this);
         const obj = {};
         fd.forEach((v, k) => obj[k] = v);
@@ -99,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const res = await fetch(url, { method: method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(obj) });
         if (res.ok) {
             showAlert(editingInstitucion ? 'Institución actualizada' : 'Institución registrada', 'success');
+            limpiarErroresFormulario(form);
             // Si se llego desde Solicitudes para crear un solicitante, se regresa con el nuevo registro
             const params = new URLSearchParams(window.location.search);
             if (params.get('origen') === 'solicitudes') {
@@ -112,6 +126,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('form-title').textContent = 'Registrar Institución';
             document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
             loadInstituciones();
-        } else showAlert('Error al guardar la institución', 'error');
+        } else {
+            const err = await res.json().catch(() => null);
+            const mensajeServidor = err && err.message ? err.message : 'Error al guardar la institución';
+            if (/nombre/i.test(mensajeServidor)) {
+                mostrarErroresFormulario(form, [{
+                    campo: document.getElementById('nombre'),
+                    mensaje: mensajeServidor,
+                    validador: () => document.getElementById('nombre').value.trim() ? null : 'El nombre es obligatorio'
+                }]);
+            } else {
+                showAlert(mensajeServidor, 'error');
+            }
+        }
     });
 });

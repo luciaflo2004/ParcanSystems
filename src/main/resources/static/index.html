@@ -1,17 +1,18 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SystemParCan - Inicio</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
     <nav class="sidebar-nav">
         <div class="sidebar-brand"><i class="fa-solid fa-place-of-worship"></i><div><h2>SystemParCan</h2><p>Parroquia de Katuete</p></div></div>
         <ul class="nav-list">
             <li><a href="index.html" class="active"><i class="fa-solid fa-house"></i> Inicio</a></li>
+            <li><a href="instituciones.html"><i class="fa-solid fa-church"></i> Instituciones Eclesiasticas</a></li>
             <li><a href="personas.html"><i class="fa-solid fa-users"></i> Personas</a></li>
             <li><a href="funcionarios.html"><i class="fa-solid fa-user-tie"></i> Funcionarios</a></li>
             <li><a href="cargos.html"><i class="fa-solid fa-briefcase"></i> Cargos</a></li>
@@ -20,9 +21,8 @@
             <li class="nav-section">Solicitudes y Servicios</li>
             <li><a href="solicitudes.html"><i class="fa-solid fa-file-pen"></i> Solicitudes</a></li>
             <li><a href="servicios.html"><i class="fa-solid fa-bell-concierge"></i> Servicios</a></li>
-            <li class="nav-section">Configuracion</li>
-            <li><a href="instituciones.html"><i class="fa-solid fa-church"></i> Instituciones Eclesiasticas</a></li>
         </ul>
+        <div class="sidebar-logout"><a href="#" onclick="confirmarCerrarSesion()"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a></div>
     </nav>
     <div class="main-content">
         <div class="page-head"><h3>Módulos del Sistema</h3></div>
@@ -57,5 +57,6 @@
             </div>
         </div>
     </div>
+    <script src="js/app.js?v=11"></script>
 </body>
 </html>

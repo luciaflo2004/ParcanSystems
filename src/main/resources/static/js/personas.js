@@ -31,15 +31,24 @@ function getPersonaRows() {
     });
 }
 
-// Renderiza la tabla aplicando los filtros
+// Renderiza la tabla aplicando los filtros y el orden seleccionado
 function renderPersonas() {
-    const rows = getPersonaRows().map(p => ({
+    const direccion = document.getElementById('orden-personas').value;
+    // Orden alfabetico por nombre; el apellido y el ID se usan como desempate
+    const rows = ordenarAlfabeticamente(
+        getPersonaRows(),
+        p => p.nombrePersona,
+        p => p.apellidoPersona,
+        p => p.ciPersona,
+        direccion
+    ).map(p => ({
         CI: p.ciPersona,
         Nombre: p.nombrePersona,
         Apellido: p.apellidoPersona,
         Telefono: p.telefonoPersona,
         Tipo: funcionarioCIs.has(p.ciPersona) ? 'Funcionario' : 'Persona',
-        Estado: p.eliminado ? 'Inactivo' : 'Activo'
+        Estado: p.eliminado ? 'Inactivo' : 'Activo',
+        _letra: letraInicial(p.nombrePersona)
     }));
 
     renderTable('personas-list', ['CI','Nombre','Apellido','Telefono','Tipo','Estado'], rows, (row) => {
@@ -51,7 +60,7 @@ function renderPersonas() {
             html += `<button class="btn btn-danger btn-sm" onclick="desactivarPersona(${row.CI})"><i class="fa-solid fa-toggle-off"></i> Desactivar</button>`;
         }
         return html;
-    });
+    }, { indiceAlfabetico: true });
 }
 
 // Cargar la lista de personas (global para poder refrescarla desde otras funciones)
@@ -67,13 +76,87 @@ function clearFiltrosPersonas() {
     document.getElementById('search-personas').value = '';
     document.getElementById('filtro-estado').value = 'todos';
     document.getElementById('filtro-rol').value = 'todos';
+    // Al limpiar se vuelve al orden predeterminado de A a la Z
+    document.getElementById('orden-personas').value = '';
     renderPersonas();
 }
 
+// Devuelve el mensaje de error de un campo de Persona, o null si es válido
+function mensajeErrorPersonaCampo(campo) {
+    if (!campo) return null;
+    const valor = campo.value;
+    const rol = document.getElementById('rol-select').value;
+
+    if (campo.id === 'ciPersona') {
+        if (!/^[0-9]{6,}$/.test(valor)) return 'La cédula debe tener mínimo 6 números y no letras';
+        if (valor.length > 8) return 'La cédula debe contener como máximo 8 números';
+        if (tieneCaracteresConsecutivos(valor, 4)) return 'No se permiten más de cuatro números iguales consecutivos';
+    }
+
+    if (campo.id === 'nombrePersona') {
+        if (!/^[A-Za-zÀ-ÿ ]+$/.test(valor)) return 'El nombre solo debe contener letras y espacios';
+        if (valor.replace(/[^A-Za-zÀ-ÿ]/g, '').length < 2) return 'El nombre debe tener mínimo 2 letras';
+        if (valor.length > 30) return 'El nombre no puede superar los 30 caracteres';
+        if (tieneEspaciosConsecutivos(valor)) return 'No se permiten más de dos espacios consecutivos';
+        if (tieneCaracteresConsecutivos(valor, 2)) return 'No se permiten más de dos letras iguales consecutivas. Ingrese un nombre válido';
+    }
+
+    if (campo.id === 'apellidoPersona') {
+        if (!/^[A-Za-zÀ-ÿ ]+$/.test(valor)) return 'El apellido solo debe contener letras y espacios';
+        if (valor.replace(/[^A-Za-zÀ-ÿ]/g, '').length < 2) return 'El apellido debe tener mínimo 2 letras';
+        if (valor.length > 30) return 'El apellido no puede superar los 30 caracteres';
+        if (tieneEspaciosConsecutivos(valor)) return 'No se permiten más de dos espacios consecutivos';
+        if (tieneCaracteresConsecutivos(valor, 2)) return 'No se permiten más de dos letras iguales consecutivas. Ingrese un apellido válido';
+    }
+
+    if (campo.id === 'fechaNacPersona') {
+        if (!valor) return 'La fecha de nacimiento es obligatoria';
+        if (valor > hoyLocal()) return 'La fecha de nacimiento no es válida. No puede ser posterior a la fecha actual. Verifique e intente nuevamente';
+        if (valor < '1930-01-01') return 'La fecha de nacimiento no puede ser anterior a 1930';
+        if (rol === 'FUNCIONARIO' && valor > fechaMaximaFuncionario()) {
+            return 'El funcionario debe tener al menos 18 años cumplidos. Verifique la fecha de nacimiento';
+        }
+    }
+
+    if (campo.id === 'telefonoPersona') {
+        if (valor && !/^[0-9]+$/.test(valor)) return 'El teléfono debe contener únicamente números';
+        if (valor && valor.length > 10) return 'El teléfono no puede superar los 10 dígitos';
+        if (valor && tieneCaracteresConsecutivos(valor, 4)) return 'No se permiten más de cuatro números iguales consecutivos';
+    }
+
+    if (campo.id === 'direccionPersona') {
+        if (valor && valor.length > 50) return 'La dirección no puede superar los 50 caracteres';
+        if (valor && tieneEspaciosConsecutivos(valor)) return 'No se permiten más de dos espacios consecutivos';
+        if (valor && tieneCaracteresConsecutivos(valor, 2)) return 'No se permiten más de dos caracteres iguales consecutivos';
+    }
+
+    if (campo.id === 'cargo-select' && rol === 'FUNCIONARIO' && !valor) {
+        return 'Debe seleccionar un cargo para el funcionario';
+    }
+
+    return null;
+}
+
+// Busca a qué campo corresponde un mensaje devuelto por el backend
+function campoPersonaPorMensaje(mensaje) {
+    const texto = (mensaje || '').toLowerCase();
+    if (texto.includes('cédula') || texto.includes('cedula')) return document.getElementById('ciPersona');
+    if (texto.includes('apellido')) return document.getElementById('apellidoPersona');
+    if (texto.includes('nombre')) return document.getElementById('nombrePersona');
+    if (texto.includes('fecha')) return document.getElementById('fechaNacPersona');
+    if (texto.includes('teléfono') || texto.includes('telefono')) return document.getElementById('telefonoPersona');
+    if (texto.includes('dirección') || texto.includes('direccion')) return document.getElementById('direccionPersona');
+    if (texto.includes('cargo')) return document.getElementById('cargo-select');
+    return null;
+}
+
+
+// Carga los datos de la persona seleccionada en el formulario
 async function editarPersona(ci) {
     const p = allPersonas.find(x => x.ciPersona === ci);
     if (!p) return;
     editingCi = ci;
+    limpiarErroresFormulario(document.getElementById('persona-form'));
 
     // Cargar los datos de la persona en el formulario
     document.getElementById('ciPersona').value = p.ciPersona;
@@ -87,12 +170,20 @@ async function editarPersona(ci) {
     const esFuncionario = funcionarioCIs.has(ci);
     document.getElementById('rol-select').value = esFuncionario ? 'FUNCIONARIO' : 'PERSONA';
     document.getElementById('cargo-group').classList.toggle('hidden', !esFuncionario);
+    // Ajustar la fecha máxima según la condición real del registro
+    document.getElementById('fechaNacPersona').max =
+        esFuncionario ? fechaMaximaFuncionario() : hoyLocal();
 
     // Si es funcionario, cargar su cargo
     if (esFuncionario) {
         const fun = await fetchAll('/api/funcionarios/' + ci);
+        const cargoSelect = document.getElementById('cargo-select');
+        // Se quita una opcion historica de una edicion anterior
+        limpiarOpcionesHistoricas(cargoSelect);
         if (fun && fun.cargo) {
-            document.getElementById('cargo-select').value = fun.cargo.codCargo;
+            // Se agrega el cargo aunque este inactivo para mostrar el dato historico
+            agregarOpcionSiFalta(cargoSelect, fun.cargo.codCargo, fun.cargo.descripcion, true);
+            cargoSelect.value = fun.cargo.codCargo;
         }
     }
 
@@ -102,6 +193,7 @@ async function editarPersona(ci) {
     document.getElementById('persona-form').scrollIntoView({ behavior: 'smooth' });
 }
 
+// Desactiva la persona seleccionada
 async function desactivarPersona(ci) {
     if (!confirm('¿Está seguro que desea desactivar este registro?')) return;
     const res = await fetch('/api/personas/' + ci, { method: 'DELETE' });
@@ -109,6 +201,7 @@ async function desactivarPersona(ci) {
     else showAlert('Error al desactivar el registro', 'error');
 }
 
+// Reactiva la persona y su funcionario si existe
 async function activarPersona(ci) {
     const res = await fetch('/api/personas/' + ci + '/restore', { method: 'POST' });
     if (res.ok) { showAlert('Registro activado', 'success'); loadPersonas(); }
@@ -119,14 +212,18 @@ async function activarPersona(ci) {
 function resetForm() {
     editingCi = null;
     document.getElementById('persona-form').reset();
+    limpiarErroresFormulario(document.getElementById('persona-form'));
+    // Al registrar un funcionario nuevo no se muestran cargos historicos inactivos
+    limpiarOpcionesHistoricas(document.getElementById('cargo-select'));
     document.getElementById('cargo-group').classList.add('hidden');
+    document.getElementById('fechaNacPersona').max = hoyLocal();
     document.getElementById('form-title').textContent = 'Registrar Persona / Funcionario';
     document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Cargar los cargos disponibles en el select
-    const cargos = await fetchAll('/api/cargos');
+    // Carga solo los cargos activos en el select
+    const cargos = await fetchActivos('/api/cargos/activos');
     const cargoSelect = document.getElementById('cargo-select');
     cargos.forEach(c => {
         const o = document.createElement('option');
@@ -135,72 +232,68 @@ document.addEventListener('DOMContentLoaded', async function() {
         cargoSelect.appendChild(o);
     });
 
-    // Mostrar/ocultar el campo Cargo según el rol elegido
+    // Mostrar/ocultar el campo Cargo según el rol elegido y ajustar la fecha máxima
     const rolSelect = document.getElementById('rol-select');
     const cargoGroup = document.getElementById('cargo-group');
+    const fechaInput = document.getElementById('fechaNacPersona');
+    function actualizarMaxFecha() {
+        // Feligrés: la fecha máxima es hoy. Funcionario: hoy menos 18 años.
+        fechaInput.max = (rolSelect.value === 'FUNCIONARIO') ? fechaMaximaFuncionario() : hoyLocal();
+    }
     rolSelect.addEventListener('change', function() {
         cargoGroup.classList.toggle('hidden', this.value !== 'FUNCIONARIO');
+        actualizarMaxFecha();
     });
+    actualizarMaxFecha();
+
+    // Si se vino desde Usuarios para crear un funcionario, se preselecciona el rol Funcionario
+    const paramsUrl = new URLSearchParams(window.location.search);
+    if (paramsUrl.get('origen') === 'usuarios') {
+        rolSelect.value = 'FUNCIONARIO';
+        cargoGroup.classList.remove('hidden');
+    }
 
     loadPersonas();
 
     // Guardar / actualizar el registro unificado
+    // Valida y envia los datos de la persona o funcionario
     document.getElementById('persona-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Si el rol es FUNCIONARIO, se exige elegir un cargo
-        const rol = document.getElementById('rol-select').value;
-        const cargo = document.getElementById('cargo-select').value;
-        if (rol === 'FUNCIONARIO' && !cargo) {
-            showAlert('Debe seleccionar un cargo para el funcionario', 'error');
-            return;
-        }
+        const form = this;
+        limpiarErroresFormulario(form);
 
-        // Validar fecha de nacimiento (obligatoria y no anterior a 1930)
-        const fecha = document.getElementById('fechaNacPersona').value;
-        if (!fecha) {
-            showAlert('La fecha de nacimiento es obligatoria', 'error');
-            return;
-        }
-        if (new Date(fecha) < new Date('1930-01-01')) {
-            showAlert('La fecha de nacimiento no puede ser anterior a 1930', 'error');
-            return;
-        }
+        // Se revisan los mismos campos y reglas que ya tenía el formulario
+        const campos = [
+            'ciPersona', 'nombrePersona', 'apellidoPersona',
+            'fechaNacPersona', 'telefonoPersona', 'direccionPersona', 'cargo-select'
+        ].map(id => document.getElementById(id));
 
-        // Validar campos con restricciones
-        const ci = document.getElementById('ciPersona').value;
-        const nombre = document.getElementById('nombrePersona').value;
-        const apellido = document.getElementById('apellidoPersona').value;
-        const telefono = document.getElementById('telefonoPersona').value;
+        const errores = erroresValidacionNativa(form);
+        campos.forEach(campo => {
+            const existente = errores.find(item => item.campo === campo);
+            if (existente) {
+                // Si ya hay un error nativo, se usa la regla personalizada para actualizarlo
+                existente.validador = () => mensajeErrorPersonaCampo(campo);
+                return;
+            }
+            const mensaje = mensajeErrorPersonaCampo(campo);
+            if (mensaje) {
+                errores.push({
+                    campo,
+                    mensaje,
+                    validador: () => mensajeErrorPersonaCampo(campo)
+                });
+            }
+        });
 
-        if (!/^[0-9]{6,}$/.test(ci)) {
-            showAlert('La cédula debe tener mínimo 6 números y no letras', 'error');
-            return;
-        }
-        // Nombre: solo letras y espacios, sin numeros ni signos; minimo 2 letras
-        if (!/^[A-Za-zÀ-ÿ ]+$/.test(nombre)) {
-            showAlert('El nombre solo debe contener letras y espacios', 'error');
-            return;
-        }
-        if ((nombre.replace(/[^A-Za-zÀ-ÿ]/g, '')).length < 2) {
-            showAlert('El nombre debe tener mínimo 2 letras', 'error');
-            return;
-        }
-        // Apellido: solo letras y espacios, sin numeros ni signos; minimo 2 letras
-        if (!/^[A-Za-zÀ-ÿ ]+$/.test(apellido)) {
-            showAlert('El apellido solo debe contener letras y espacios', 'error');
-            return;
-        }
-        if ((apellido.replace(/[^A-Za-zÀ-ÿ]/g, '')).length < 2) {
-            showAlert('El apellido debe tener mínimo 2 letras', 'error');
-            return;
-        }
-        if (telefono && !/^[0-9]{10,}$/.test(telefono)) {
-            showAlert('El teléfono debe tener mínimo 10 números y no letras', 'error');
+        if (errores.length) {
+            mostrarErroresFormulario(form, errores);
             return;
         }
 
         // Construir el objeto con datos personales + rol + cargo
+        const cargo = document.getElementById('cargo-select').value;
         const fd = new FormData(this);
         const obj = {};
         fd.forEach((v, k) => obj[k] = v);
@@ -222,15 +315,28 @@ document.addEventListener('DOMContentLoaded', async function() {
                     window.location.href = 'solicitudes.html';
                     return;
                 }
-                this.reset();
-                editingCi = null;
-                cargoGroup.classList.add('hidden');
-                document.getElementById('form-title').textContent = 'Registrar Persona / Funcionario';
-                document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
+                // Si se llego desde Usuarios para crear un funcionario, se regresa con el nuevo registro
+                if (params.get('origen') === 'usuarios') {
+                    const saved = await res.json();
+                    localStorage.setItem('spc_nuevo_funcionario', JSON.stringify({ id: saved.ciPersona }));
+                    window.location.href = 'usuarios.html';
+                    return;
+                }
+                resetForm();
                 loadPersonas();
             } else {
                 const err = await res.json().catch(() => null);
-                showAlert(err && err.message ? err.message : 'Error al guardar el registro', 'error');
+                const mensajeServidor = err && err.message ? err.message : 'Error al guardar el registro';
+                const campo = campoPersonaPorMensaje(mensajeServidor);
+                if (campo) {
+                    mostrarErroresFormulario(form, [{
+                        campo,
+                        mensaje: mensajeServidor,
+                        validador: () => mensajeErrorPersonaCampo(campo)
+                    }]);
+                } else {
+                    showAlert(mensajeServidor, 'error');
+                }
             }
         } catch (err) {
             showAlert('No se pudo conectar con el servidor', 'error');
@@ -241,4 +347,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('search-personas').addEventListener('input', renderPersonas);
     document.getElementById('filtro-estado').addEventListener('change', renderPersonas);
     document.getElementById('filtro-rol').addEventListener('change', renderPersonas);
+    document.getElementById('orden-personas').addEventListener('change', renderPersonas);
 });

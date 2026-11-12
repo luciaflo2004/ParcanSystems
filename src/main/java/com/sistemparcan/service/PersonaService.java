@@ -5,6 +5,7 @@ import com.sistemparcan.entity.Funcionario;
 import com.sistemparcan.entity.Persona;
 import com.sistemparcan.repository.CargoRepository;
 import com.sistemparcan.repository.PersonaRepository;
+import com.sistemparcan.util.ValidacionUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.http.HttpStatus;
@@ -38,18 +39,33 @@ public class PersonaService {
         this.cargoRepository = cargoRepository;
     }
 
+    // Devuelve todas las personas ordenadas por fecha de registro
     public List<Persona> findAll() {
         return repository.findAllByOrderByFechaRegistroAsc();
     }
 
+    // Devuelve solamente las personas activas para los desplegables
+    public List<Persona> findActivas() {
+        return repository.findByEliminadoFalseOrderByFechaRegistroAsc();
+    }
+
+    // Busca una persona por su cedula
     public Optional<Persona> findById(Integer id) {
         return repository.findById(id);
     }
 
+    // Guarda una persona validando sus fechas y datos
     public Persona save(Persona persona) {
+        // Los endpoints genericos tambien validan fechas y datos, aunque el navegador
+        // omita sus comprobaciones.
+        boolean yaEsFuncionario = persona.getCiPersona() != null
+                && funcionarioService.findById(persona.getCiPersona()).isPresent();
+        validarFecha(persona, yaEsFuncionario);
+        validarDatosPersona(persona);
         return repository.save(persona);
     }
 
+    // Desactiva la persona sin borrarla de la base de datos
     public void deleteById(Integer id) {
         repository.findById(id).ifPresent(p -> {
             p.setEliminado(true);
@@ -57,10 +73,18 @@ public class PersonaService {
         });
     }
 
+    // Reactiva la persona y su funcionario si existe
+    @Transactional
     public void restoreById(Integer id) {
         repository.findById(id).ifPresent(p -> {
             p.setEliminado(false);
             repository.save(p);
+            // Si la persona tambien es funcionario, se reactiva su registro
+            // para que vuelva a estar disponible en los desplegables.
+            funcionarioService.findById(id).ifPresent(f -> {
+                f.setEliminado(false);
+                funcionarioService.save(f);
+            });
         });
     }
 
@@ -70,9 +94,21 @@ public class PersonaService {
      */
     @Transactional
     public Persona registrar(Persona persona) {
-        validarFecha(persona.getFechaNacPersona());
+        validarFecha(persona, false);
+        validarDatosPersona(persona);
+        // No se permite registrar dos veces la misma cedula
+        if (persona.getCiPersona() != null && repository.findById(persona.getCiPersona()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La cédula " + persona.getCiPersona() + " ya está registrada");
+        }
         persona.setFechaRegistro(LocalDateTime.now());
+        // repository.save sobre una entidad con id asignado usa merge, y merge no copia
+        // los campos @Transient: se conservan para poder crear el funcionario asociado.
+        String rol = persona.getRol();
+        Integer cargo = persona.getCargo();
         persona = repository.save(persona);
+        persona.setRol(rol);
+        persona.setCargo(cargo);
         guardarFuncionarioSiCorresponde(persona);
         return persona;
     }
@@ -86,7 +122,11 @@ public class PersonaService {
      */
     @Transactional
     public Persona actualizar(Integer oldCi, Persona persona) {
-        validarFecha(persona.getFechaNacPersona());
+        // La condición de funcionario se toma del registro real en la base y del rol enviado,
+        // de modo que la validación de edad no dependa únicamente de la pantalla utilizada.
+        boolean yaEsFuncionario = funcionarioService.findById(oldCi).isPresent();
+        validarFecha(persona, yaEsFuncionario);
+        validarDatosPersona(persona);
 
         Persona existente = repository.findById(oldCi)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -109,8 +149,14 @@ public class PersonaService {
         existente.setFechaNacPersona(persona.getFechaNacPersona());
         existente.setDireccionPersona(persona.getDireccionPersona());
         existente.setTelefonoPersona(persona.getTelefonoPersona());
+        // Se propagan los campos transitorios (rol y cargo) para crear o actualizar el funcionario asociado
+        existente.setRol(persona.getRol());
+        existente.setCargo(persona.getCargo());
+        String rol = existente.getRol();
+        Integer cargo = existente.getCargo();
         existente = repository.save(existente);
-
+        existente.setRol(rol);
+        existente.setCargo(cargo);
         guardarFuncionarioSiCorresponde(existente);
         return existente;
     }
@@ -162,21 +208,82 @@ public class PersonaService {
     }
 
     /**
-     * Valida que la fecha de nacimiento sea obligatoria y este dentro del rango permitido.
+     * Valida la fecha de nacimiento según la condición del registro:
+     * - Para todos: no puede ser posterior a la fecha actual.
+     * - Para funcionarios: además debe tener al menos 18 años cumplidos.
      */
-    private void validarFecha(LocalDate fecha) {
+    private void validarFecha(Persona persona, boolean yaEsFuncionario) {
+        LocalDate fecha = persona.getFechaNacPersona();
         if (fecha == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "La fecha de nacimiento es obligatoria");
+                    "Ingrese una fecha de nacimiento válida");
+        }
+        LocalDate hoy = LocalDate.now();
+        // No se permite una fecha de nacimiento posterior al día actual
+        if (fecha.isAfter(hoy)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La fecha de nacimiento no es válida. No puede ser posterior a la fecha actual. Verifique e intente nuevamente");
         }
         LocalDate minimo = LocalDate.of(1930, 1, 1);
         if (fecha.isBefore(minimo)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "La fecha de nacimiento no puede ser anterior a 1930");
         }
-        if (fecha.isAfter(LocalDate.now())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "La fecha de nacimiento no puede ser futura");
+        // Si es funcionario (por el rol enviado o porque ya lo era en la base),
+        // debe tener al menos 18 años cumplidos
+        if (yaEsFuncionario || "FUNCIONARIO".equalsIgnoreCase(persona.getRol())) {
+            LocalDate maximo = hoy.minusYears(18);
+            if (fecha.isAfter(maximo)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El funcionario debe tener al menos 18 años cumplidos. Verifique la fecha de nacimiento");
+            }
+        }
+    }
+
+    /**
+     * Valida los campos de texto de la persona (nombre, apellido, teléfono, dirección y cédula).
+     */
+    private void validarDatosPersona(Persona persona) {
+        if (persona.getNombrePersona() == null || persona.getNombrePersona().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ingrese un nombre válido");
+        }
+        ValidacionUtil.validarSoloLetras(persona.getNombrePersona(), "El nombre solo puede contener letras");
+        ValidacionUtil.validarLongitud(persona.getNombrePersona(), 30, "El nombre no puede superar los 30 caracteres");
+        ValidacionUtil.validarEspaciosConsecutivos(persona.getNombrePersona());
+        ValidacionUtil.validarCaracteresConsecutivos(persona.getNombrePersona(), 2,
+                "No se permiten más de dos letras iguales consecutivas. Ingrese un nombre válido");
+
+        if (persona.getApellidoPersona() == null || persona.getApellidoPersona().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ingrese un apellido válido");
+        }
+        ValidacionUtil.validarSoloLetras(persona.getApellidoPersona(), "El apellido contiene caracteres no permitidos");
+        ValidacionUtil.validarLongitud(persona.getApellidoPersona(), 30, "El apellido no puede superar los 30 caracteres");
+        ValidacionUtil.validarEspaciosConsecutivos(persona.getApellidoPersona());
+        ValidacionUtil.validarCaracteresConsecutivos(persona.getApellidoPersona(), 2,
+                "No se permiten más de dos letras iguales consecutivas. Ingrese un apellido válido");
+
+        ValidacionUtil.validarSoloNumeros(persona.getTelefonoPersona(), "El teléfono debe contener únicamente números");
+        ValidacionUtil.validarLongitud(persona.getTelefonoPersona(), 10, "El teléfono no puede superar los 10 dígitos");
+        ValidacionUtil.validarNumerosConsecutivos(persona.getTelefonoPersona(), 4,
+                "No se permiten más de cuatro números iguales consecutivos");
+
+        ValidacionUtil.validarLongitud(persona.getDireccionPersona(), 50, "La dirección no puede superar los 50 caracteres");
+        ValidacionUtil.validarEspaciosConsecutivos(persona.getDireccionPersona());
+        ValidacionUtil.validarCaracteresConsecutivos(persona.getDireccionPersona(), 2,
+                "No se permiten más de dos caracteres iguales consecutivos");
+
+        if (persona.getCiPersona() != null) {
+            String ci = String.valueOf(persona.getCiPersona());
+            if (ci.length() < 6) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "La cédula debe tener mínimo 6 números");
+            }
+            if (ci.length() > 8) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "La cédula debe contener como máximo 8 números");
+            }
+            ValidacionUtil.validarNumerosConsecutivos(ci, 4,
+                    "No se permiten más de cuatro números iguales consecutivos");
         }
     }
 
@@ -192,9 +299,20 @@ public class PersonaService {
                         return f;
                     });
 
+            // Se guarda el cargo anterior para permitir conservarlo si esta inactivo
+            Cargo cargoAnterior = funcionario.getCargo();
             funcionario.setPersona(persona);
             if (persona.getCargo() != null) {
-                Cargo cargo = cargoRepository.findById(persona.getCargo()).orElse(null);
+                Cargo cargo = cargoRepository.findById(persona.getCargo())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "El cargo seleccionado no existe"));
+                boolean esMismoCargo = cargoAnterior != null
+                        && cargoAnterior.getCodCargo().equals(cargo.getCodCargo());
+                // No se permite asignar un cargo inactivo nuevo, pero se conserva el historico
+                if (Boolean.TRUE.equals(cargo.getEliminado()) && !esMismoCargo) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "El cargo seleccionado está inactivo");
+                }
                 funcionario.setCargo(cargo);
             }
             funcionarioService.save(funcionario);

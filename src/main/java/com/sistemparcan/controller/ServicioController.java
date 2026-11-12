@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.sistemparcan.entity.Servicio;
 import com.sistemparcan.service.ServicioService;
 
+// Endpoints para consultar y administrar servicios
 @Controller
 @RequestMapping("/api/servicios")
 public class ServicioController {
@@ -27,12 +28,14 @@ public class ServicioController {
         this.service = service;
     }
 
+    // Devuelve la lista completa de servicios
     @GetMapping
     @ResponseBody
     public ResponseEntity<List<Servicio>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
+    // Busca un servicio por su codigo
     @GetMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Servicio> findById(@PathVariable Integer id) {
@@ -41,12 +44,14 @@ public class ServicioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Registra un servicio nuevo
     @PostMapping
     @ResponseBody
     public ResponseEntity<Servicio> save(@RequestBody Servicio entity) {
         return ResponseEntity.ok(service.save(entity));
     }
 
+    // Actualiza los datos de un servicio
     @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Servicio> update(@PathVariable Integer id, @RequestBody Servicio entity) {
@@ -60,6 +65,7 @@ public class ServicioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Desactiva el servicio sin borrarlo de la base de datos
     @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Map<String, String>> deleteById(@PathVariable Integer id) {
@@ -67,6 +73,7 @@ public class ServicioController {
         return ResponseEntity.ok(Map.of("mensaje", "Eliminado logicamente"));
     }
 
+    // Reactiva un servicio desactivado
     @PostMapping("/{id}/restore")
     @ResponseBody
     public ResponseEntity<Map<String, String>> restoreById(@PathVariable Integer id) {

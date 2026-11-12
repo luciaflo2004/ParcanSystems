@@ -11,10 +11,12 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
+// Persona registrada en el sistema; puede ser feligres o funcionario
 @Entity
 @Table(name = "Persona")
 public class Persona {
 
+    // Cedula de la persona; se usa como clave primaria
     @Id
     @Column(name = "ciPersona")
     private Integer ciPersona;

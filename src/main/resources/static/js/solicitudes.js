@@ -19,13 +19,14 @@ function renderSolicitudes() {
     const texto = (document.getElementById('search-solicitudes').value || '').toLowerCase();
     const estadoF = document.getElementById('filtro-estado').value;
 
-    const rows = solicitudesData.filter(s => {
+    // Ordena las solicitudes por codigo ascendente
+    const rows = ordenarPorId(solicitudesData.filter(s => {
         const bloque = [s.detalle || '', nombreSolicitante(s)].join(' ').toLowerCase();
         if (texto && !bloque.includes(texto)) return false;
         const estado = s.aprobada ? 'aprobada' : 'pendiente';
         if (estadoF !== 'todos' && estado !== estadoF) return false;
         return true;
-    }).map(s => ({
+    }), 'codSolicitud').map(s => ({
         Cod: s.codSolicitud,
         Detalle: s.detalle,
         Fecha: s.fechaSolicitud,
@@ -55,14 +56,15 @@ function clearFiltrosSolicitudes() {
     renderSolicitudes();
 }
 
-// Carga los solicitantes (personas e instituciones activas) en sus desplegables
+// Carga los solicitantes activos (personas e instituciones) en sus desplegables
 async function cargarSolicitantes() {
-    personasSolicitantes = await fetchAll('/api/personas');
-    institucionesSolicitantes = await fetchAll('/api/instituciones');
+    // Solo se ofrecen personas e instituciones activas para solicitudes nuevas
+    personasSolicitantes = await fetchActivos('/api/personas/activas');
+    institucionesSolicitantes = await fetchActivos('/api/instituciones/activas');
 
     const selF = document.getElementById('feligres-select');
     selF.innerHTML = '<option value="">Seleccione...</option>';
-    personasSolicitantes.filter(p => !p.eliminado).forEach(p => {
+    personasSolicitantes.forEach(p => {
         const o = document.createElement('option');
         o.value = p.ciPersona;
         o.text = (p.nombrePersona || '') + ' ' + (p.apellidoPersona || '');
@@ -71,7 +73,7 @@ async function cargarSolicitantes() {
 
     const selI = document.getElementById('institucion-select');
     selI.innerHTML = '<option value="">Seleccione...</option>';
-    institucionesSolicitantes.filter(i => !i.eliminado).forEach(i => {
+    institucionesSolicitantes.forEach(i => {
         const o = document.createElement('option');
         o.value = i.idInstitucionEclesiastica;
         o.text = i.nombre || '';
@@ -86,39 +88,36 @@ function mostrarGrupoSolicitante() {
     document.getElementById('institucion-group').classList.toggle('hidden', tipo !== 'INSTITUCION');
 }
 
-// Agrega una opcion al select si aún no existe (para precargar solicitantes ya desactivados)
-function asegurarOpcion(select, value, text) {
-    if (value == null) return;
-    if (!Array.from(select.options).some(o => o.value === String(value))) {
-        const o = document.createElement('option');
-        o.value = value;
-        o.text = text;
-        select.appendChild(o);
-    }
-}
-
+// Carga los datos de la solicitud seleccionada en el formulario
 function editarSolicitud(cod) {
     const s = solicitudesData.find(x => x.codSolicitud === cod);
     if (!s) return;
     editingSolicitud = cod;
+    limpiarErroresFormulario(document.getElementById('solicitud-form'));
     document.getElementById('detalle').value = s.detalle || '';
     document.getElementById('fechaSolicitud').value = s.fechaSolicitud || '';
     document.getElementById('aprobada').value = s.aprobada ? 'true' : 'false';
+
+    // Se quitan opciones historicas de una edicion anterior
+    const selF = document.getElementById('feligres-select');
+    const selI = document.getElementById('institucion-select');
+    limpiarOpcionesHistoricas(selF);
+    limpiarOpcionesHistoricas(selI);
 
     // Precargan el tipo de solicitante y el registro correspondiente
     const tipoSelect = document.getElementById('tipo-solicitante');
     if (s.institucion) {
         tipoSelect.value = 'INSTITUCION';
         mostrarGrupoSolicitante();
-        const sel = document.getElementById('institucion-select');
-        asegurarOpcion(sel, s.institucion.idInstitucionEclesiastica, s.institucion.nombre || '');
-        sel.value = s.institucion.idInstitucionEclesiastica;
+        agregarOpcionSiFalta(selI, s.institucion.idInstitucionEclesiastica,
+            s.institucion.nombre || '', true);
+        selI.value = s.institucion.idInstitucionEclesiastica;
     } else if (s.feligres) {
         tipoSelect.value = 'FELIGRES';
         mostrarGrupoSolicitante();
-        const sel = document.getElementById('feligres-select');
-        asegurarOpcion(sel, s.feligres.ciPersona, (s.feligres.nombrePersona || '') + ' ' + (s.feligres.apellidoPersona || ''));
-        sel.value = s.feligres.ciPersona;
+        agregarOpcionSiFalta(selF, s.feligres.ciPersona,
+            (s.feligres.nombrePersona || '') + ' ' + (s.feligres.apellidoPersona || ''), true);
+        selF.value = s.feligres.ciPersona;
     } else {
         tipoSelect.value = '';
         mostrarGrupoSolicitante();
@@ -129,9 +128,14 @@ function editarSolicitud(cod) {
     document.getElementById('solicitud-form').scrollIntoView({ behavior: 'smooth' });
 }
 
+// Limpia el formulario para registrar una solicitud nueva
 function resetSolicitudForm() {
     editingSolicitud = null;
     document.getElementById('solicitud-form').reset();
+    limpiarErroresFormulario(document.getElementById('solicitud-form'));
+    // Al registrar una solicitud nueva no se muestran solicitantes historicos inactivos
+    limpiarOpcionesHistoricas(document.getElementById('feligres-select'));
+    limpiarOpcionesHistoricas(document.getElementById('institucion-select'));
     document.getElementById('tipo-solicitante').value = '';
     document.getElementById('feligres-select').value = '';
     document.getElementById('institucion-select').value = '';
@@ -185,6 +189,54 @@ function crearNuevaInstitucion() {
     window.location.href = 'instituciones.html?origen=solicitudes';
 }
 
+// Devuelve el mensaje de error de un campo de Solicitud, o null si es válido
+function mensajeErrorSolicitudCampo(campo) {
+    if (!campo) return null;
+    const tipo = document.getElementById('tipo-solicitante').value;
+    const valor = campo.value;
+
+    if (campo.id === 'tipo-solicitante' && !valor) {
+        return 'Debe seleccionar un tipo de solicitante';
+    }
+    if (campo.id === 'feligres-select' && tipo === 'FELIGRES' && !valor) {
+        return 'Debe seleccionar un feligrés válido';
+    }
+    if (campo.id === 'institucion-select' && tipo === 'INSTITUCION' && !valor) {
+        return 'Debe seleccionar una institución válida';
+    }
+    if (campo.id === 'detalle') {
+        if (!valor || !valor.trim()) return 'El detalle es obligatorio';
+        if (valor.length > 50) return 'El detalle no puede superar los 50 caracteres';
+        if (tieneEspaciosConsecutivos(valor)) return 'No se permiten más de dos espacios consecutivos';
+        if (tieneCaracteresConsecutivos(valor, 2)) return 'No se permiten más de dos caracteres iguales consecutivos';
+    }
+    if (campo.id === 'fechaSolicitud') {
+        if (!valor) return 'Fecha inválida. Debe ingresar una fecha de solicitud.';
+        if (!esFechaISOValida(valor)) return 'Fecha inválida. Ingrese una fecha de solicitud válida.';
+        const hoy = hoyLocal();
+        const fechaMinima = fechaHaceMeses(6);
+        if (valor < fechaMinima) {
+            return 'Fecha inválida. Ingrese otra fecha. La fecha de solicitud no puede ser anterior a los últimos seis meses.';
+        }
+        if (valor > hoy) {
+            return 'Fecha inválida. Ingrese otra fecha. La fecha de solicitud no puede ser posterior a la fecha actual.';
+        }
+    }
+    return null;
+}
+
+// Busca a qué campo corresponde un mensaje devuelto por el backend
+function campoSolicitudPorMensaje(mensaje) {
+    const texto = (mensaje || '').toLowerCase();
+    if (texto.includes('feligrés') || texto.includes('feligres')) return document.getElementById('feligres-select');
+    if (texto.includes('institución') || texto.includes('institucion')) return document.getElementById('institucion-select');
+    if (texto.includes('detalle')) return document.getElementById('detalle');
+    if (texto.includes('fecha')) return document.getElementById('fechaSolicitud');
+    if (texto.includes('solicitante')) return document.getElementById('tipo-solicitante');
+    return null;
+}
+
+// Desactiva la solicitud seleccionada
 async function desactivarSolicitud(cod) {
     if (!confirm('¿Está seguro que desea desactivar esta solicitud?')) return;
     const res = await fetch('/api/solicitudes/' + cod, { method: 'DELETE' });
@@ -192,6 +244,7 @@ async function desactivarSolicitud(cod) {
     else showAlert('Error al desactivar la solicitud', 'error');
 }
 
+// Reactiva una solicitud desactivada
 async function activarSolicitud(cod) {
     const res = await fetch('/api/solicitudes/' + cod + '/restore', { method: 'POST' });
     if (res.ok) { showAlert('Solicitud activada', 'success'); loadSolicitudes(); }
@@ -211,6 +264,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     await cargarSolicitantes();
 
+    // Buscadores por nombre dentro de los desplegables de solicitantes
+    crearBuscadorSelect('feligres-select', 'feligres-busqueda');
+    crearBuscadorSelect('institucion-select', 'institucion-busqueda');
+
     // Aplicar la auto-selección del nuevo solicitante, si corresponde
     if (nuevoSolicitantePendiente) {
         const tipoSelect = document.getElementById('tipo-solicitante');
@@ -225,38 +282,72 @@ document.addEventListener('DOMContentLoaded', async function() {
         nuevoSolicitantePendiente = null;
     }
 
+    // Configura los limites de la fecha de solicitud
+    const fechaSolicitudInput = document.getElementById('fechaSolicitud');
+    fechaSolicitudInput.required = true;
+    fechaSolicitudInput.min = fechaHaceMeses(6);
+    fechaSolicitudInput.max = hoyLocal();
+
     loadSolicitudes();
 
     // Al cambiar el tipo se limpia la selección anterior y se muestra el desplegable correcto
     document.getElementById('tipo-solicitante').addEventListener('change', function() {
         document.getElementById('feligres-select').value = '';
         document.getElementById('institucion-select').value = '';
+        limpiarErrorCampo(document.getElementById('feligres-select'));
+        limpiarErrorCampo(document.getElementById('institucion-select'));
         mostrarGrupoSolicitante();
     });
 
+    // Valida y envia los datos de la solicitud
     document.getElementById('solicitud-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Se valida en el frontend que exista un solicitante válido
+        const form = this;
+        limpiarErroresFormulario(form);
+
+        // Se revisan las mismas reglas que ya tenía el formulario
+        const campos = ['tipo-solicitante', 'feligres-select', 'institucion-select', 'detalle', 'fechaSolicitud']
+            .map(id => document.getElementById(id));
+        const errores = erroresValidacionNativa(form);
+        campos.forEach(campo => {
+            const existente = errores.find(item => item.campo === campo);
+            const mensaje = mensajeErrorSolicitudCampo(campo);
+            if (existente) {
+                existente.validador = () => mensajeErrorSolicitudCampo(campo);
+                if (campo.id === 'fechaSolicitud' && mensaje) {
+                    existente.mensaje = mensaje;
+                }
+                return;
+            }
+            if (mensaje) {
+                errores.push({
+                    campo,
+                    mensaje,
+                    validador: () => mensajeErrorSolicitudCampo(campo)
+                });
+            }
+        });
+        if (errores.length) {
+            mostrarErroresFormulario(form, errores);
+            return;
+        }
+
         const tipo = document.getElementById('tipo-solicitante').value;
         let feligres = null;
         let institucion = null;
         if (tipo === 'FELIGRES') {
-            const v = document.getElementById('feligres-select').value;
-            if (!v) { showAlert('Debe seleccionar un feligrés válido', 'error'); return; }
-            feligres = { ciPersona: Number(v) };
-        } else if (tipo === 'INSTITUCION') {
-            const v = document.getElementById('institucion-select').value;
-            if (!v) { showAlert('Debe seleccionar una institución válida', 'error'); return; }
-            institucion = { idInstitucionEclesiastica: Number(v) };
+            feligres = { ciPersona: Number(document.getElementById('feligres-select').value) };
         } else {
-            showAlert('Debe seleccionar un tipo de solicitante', 'error');
-            return;
+            institucion = { idInstitucionEclesiastica: Number(document.getElementById('institucion-select').value) };
         }
+
+        // Validar el detalle
+        const detalle = document.getElementById('detalle').value;
 
         // Se arma el objeto con la relación del solicitante elegido (solo una de las dos)
         const obj = {
-            detalle: document.getElementById('detalle').value || null,
+            detalle: detalle || null,
             fechaSolicitud: document.getElementById('fechaSolicitud').value || null,
             aprobada: document.getElementById('aprobada').value === 'true',
             feligres: feligres,
@@ -272,7 +363,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             loadSolicitudes();
         } else {
             const err = await res.json().catch(() => null);
-            showAlert(err && err.message ? err.message : 'Error al guardar la solicitud', 'error');
+            const mensajeServidor = err && err.message ? err.message : 'Error al guardar la solicitud';
+            const campo = campoSolicitudPorMensaje(mensajeServidor);
+            if (campo) {
+                mostrarErroresFormulario(form, [{
+                    campo,
+                    mensaje: mensajeServidor,
+                    validador: () => mensajeErrorSolicitudCampo(campo)
+                }]);
+            } else {
+                showAlert(mensajeServidor, 'error');
+            }
         }
     });
 

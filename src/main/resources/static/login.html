@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SystemParCan - Iniciar Sesión</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css?v=10">
+</head>
+<body>
+    <div class="login-container">
+        <div class="card login-card">
+            <div class="login-brand">
+                <i class="fa-solid fa-place-of-worship"></i>
+                <h2>SystemParCan</h2>
+                <p>Parroquia de Katuete</p>
+            </div>
+            <h3>Iniciar Sesión</h3>
+            <!-- Mensaje para errores de usuario, cuenta desactivada o cierre de sesión -->
+            <div id="login-message" class="alert-error hidden"></div>
+            <!-- Formulario de autenticación procesado por Spring Security -->
+            <form action="/login" method="post">
+                <div class="form-group"><label>Usuario:</label><input type="text" name="usuario" id="usuario" required autofocus></div>
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <div class="solicitante-row">
+                        <input type="password" name="contrasena" id="contrasena" required>
+                        <button type="button" class="btn btn-outline" onclick="togglePassword()" aria-label="Mostrar u ocultar contraseña" title="Mostrar u ocultar contraseña"><i class="fa-solid fa-eye" id="toggle-password-icon"></i></button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary login-submit"><i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión</button>
+            </form>
+            <p class="login-registro">¿Todavía no tienes una cuenta? <a href="registro.html">Registrarse</a></p>
+        </div>
+    </div>
+    <script src="js/login.js?v=1"></script>
+</body>
+</html>

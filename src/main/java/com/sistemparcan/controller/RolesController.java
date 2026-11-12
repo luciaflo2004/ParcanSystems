@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.sistemparcan.entity.Roles;
 import com.sistemparcan.service.RolesService;
 
+// Endpoints para consultar y administrar roles
 @Controller
 @RequestMapping("/api/roles")
 public class RolesController {
@@ -27,12 +28,14 @@ public class RolesController {
         this.service = service;
     }
 
+    // Devuelve la lista completa de roles
     @GetMapping
     @ResponseBody
     public ResponseEntity<List<Roles>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
+    // Busca un rol por su identificador
     @GetMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Roles> findById(@PathVariable Integer id) {
@@ -41,12 +44,14 @@ public class RolesController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Registra un rol nuevo
     @PostMapping
     @ResponseBody
     public ResponseEntity<Roles> save(@RequestBody Roles entity) {
         return ResponseEntity.ok(service.save(entity));
     }
 
+    // Actualiza un rol existente
     @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Roles> update(@PathVariable Integer id, @RequestBody Roles entity) {
@@ -60,6 +65,7 @@ public class RolesController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Desactiva el rol sin borrarlo de la base de datos
     @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Map<String, String>> deleteById(@PathVariable Integer id) {
@@ -67,6 +73,7 @@ public class RolesController {
         return ResponseEntity.ok(Map.of("mensaje", "Eliminado logicamente"));
     }
 
+    // Reactiva un rol desactivado
     @PostMapping("/{id}/restore")
     @ResponseBody
     public ResponseEntity<Map<String, String>> restoreById(@PathVariable Integer id) {

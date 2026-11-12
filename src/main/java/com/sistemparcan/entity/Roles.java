@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+// Rol o permiso que se puede asignar a los usuarios
 @Entity
 @Table(name = "Roles")
 public class Roles {
@@ -28,6 +29,7 @@ public class Roles {
     @Column(name = "eliminado", nullable = false)
     private Boolean eliminado = false;
 
+    // Usuarios que tienen asignado este rol
     @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     private Set<Usuario> usuarios = new HashSet<>();
 

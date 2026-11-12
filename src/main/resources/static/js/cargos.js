@@ -7,12 +7,13 @@ function renderCargos() {
     const texto = (document.getElementById('search-cargos').value || '').toLowerCase();
     const estadoF = document.getElementById('filtro-estado').value;
 
-    const rows = cargosData.filter(c => {
+    // Ordena los registros por ID ascendente antes de mostrarlos
+    const rows = ordenarPorId(cargosData.filter(c => {
         if (texto && !(c.descripcion || '').toLowerCase().includes(texto)) return false;
         const estado = c.eliminado ? 'inactivo' : 'activo';
         if (estadoF !== 'todos' && estado !== estadoF) return false;
         return true;
-    }).map(c => ({
+    }), 'codCargo').map(c => ({
         Cod: c.codCargo,
         Descripcion: c.descripcion,
         Estado: c.eliminado ? 'Inactivo' : 'Activo'
@@ -39,19 +40,34 @@ function clearFiltrosCargos() {
     renderCargos();
 }
 
+// Devuelve el mensaje de error del formulario de cargos, o null si esta correcto
+function mensajeErrorCargo() {
+    const descripcion = document.getElementById('descripcion').value;
+    if (!descripcion.trim()) return 'La descripción del cargo es obligatoria';
+    if (!esSoloLetras(descripcion)) return 'La descripción del cargo solo permite letras y espacios';
+    if (descripcion.length > 100) return 'La descripción no puede superar los 100 caracteres';
+    if (tieneEspaciosConsecutivos(descripcion)) return 'No se permiten más de dos espacios consecutivos';
+    if (tieneCaracteresConsecutivos(descripcion, 2)) return 'No se permiten más de dos letras iguales consecutivas';
+    return null;
+}
+
+// Carga los datos del cargo seleccionado en el formulario
 function editarCargo(cod) {
     const c = cargosData.find(x => x.codCargo === cod);
     if (!c) return;
     editingCargo = cod;
     document.getElementById('descripcion').value = c.descripcion || '';
+    limpiarErroresFormulario(document.getElementById('cargo-form'));
     document.getElementById('form-title').textContent = 'Editar Cargo';
     document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Actualizar';
     document.getElementById('cargo-form').scrollIntoView({ behavior: 'smooth' });
 }
 
+// Limpia el formulario para registrar un cargo nuevo
 function resetCargoForm() {
     editingCargo = null;
     document.getElementById('cargo-form').reset();
+    limpiarErroresFormulario(document.getElementById('cargo-form'));
     document.getElementById('form-title').textContent = 'Registrar Cargo';
     document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
 }
@@ -76,8 +92,33 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('search-cargos').addEventListener('input', renderCargos);
     document.getElementById('filtro-estado').addEventListener('change', renderCargos);
 
+    // Valida los datos del cargo antes de guardar
     document.getElementById('cargo-form').addEventListener('submit', async function(e) {
         e.preventDefault();
+        const form = this;
+        const descripcionInput = document.getElementById('descripcion');
+        limpiarErroresFormulario(form);
+
+        const errores = erroresValidacionNativa(form);
+        const errorDescripcion = errores.find(item => item.campo === descripcionInput);
+        if (errorDescripcion) {
+            // La regla personalizada actualiza el mensaje mientras se corrige
+            errorDescripcion.validador = mensajeErrorCargo;
+        } else {
+            const mensaje = mensajeErrorCargo();
+            if (mensaje) {
+                errores.push({
+                    campo: descripcionInput,
+                    mensaje,
+                    validador: mensajeErrorCargo
+                });
+            }
+        }
+        if (errores.length) {
+            mostrarErroresFormulario(form, errores);
+            return;
+        }
+
         const fd = new FormData(this);
         const obj = {};
         fd.forEach((v, k) => obj[k] = v);
@@ -88,9 +129,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             showAlert(editingCargo ? 'Cargo actualizado' : 'Cargo registrado', 'success');
             this.reset();
             editingCargo = null;
+            limpiarErroresFormulario(form);
             document.getElementById('form-title').textContent = 'Registrar Cargo';
             document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
             loadCargos();
-        } else showAlert('Error al guardar el cargo', 'error');
+        } else {
+            const err = await res.json().catch(() => null);
+            const mensajeServidor = err && err.message ? err.message : 'Error al guardar el cargo';
+            if (/descripci[oó]n/i.test(mensajeServidor)) {
+                mostrarErroresFormulario(form, [{
+                    campo: descripcionInput,
+                    mensaje: mensajeServidor,
+                    validador: mensajeErrorCargo
+                }]);
+            } else {
+                showAlert(mensajeServidor, 'error');
+            }
+        }
     });
 });

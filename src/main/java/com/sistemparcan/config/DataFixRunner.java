@@ -23,6 +23,7 @@ public class DataFixRunner implements CommandLineRunner {
         this.personaRepository = personaRepository;
     }
 
+    // Corrige los datos nulos de las personas al iniciar la aplicacion
     @Override
     public void run(String... args) {
         LocalDate fechaEjemplo = LocalDate.of(1990, 1, 1);

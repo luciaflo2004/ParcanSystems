@@ -1,0 +1,7 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< com.sistemparcan:SistemParcan >--------------------
+[INFO] Building SistemParcan 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/springframework/security/spring-security-crypto/7.1.1/spring-security-crypto-7.1.1.pom

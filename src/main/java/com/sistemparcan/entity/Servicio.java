@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+// Servicio realizado o pendiente, relacionado con una solicitud y un funcionario
 @Entity
 @Table(name = "Servicio")
 public class Servicio {
@@ -36,6 +37,7 @@ public class Servicio {
     @JsonIgnoreProperties({"servicios"})
     private Solicitud solicitud;
 
+    // Funcionario responsable de realizar el servicio
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Funcionario_ciPersona")
     @JsonIgnoreProperties({"servicios", "solicitudes"})

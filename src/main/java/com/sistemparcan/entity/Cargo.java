@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+// Cargo que puede desempenar un funcionario
 @Entity
 @Table(name = "Cargo")
 public class Cargo {
@@ -17,7 +18,7 @@ public class Cargo {
     @Column(name = "codCargo")
     private Integer codCargo;
 
-    @Column(name = "Descripcion", length = 45, nullable = false)
+    @Column(name = "Descripcion", length = 100, nullable = false)
     private String descripcion;
 
     @Column(name = "eliminado", nullable = false)

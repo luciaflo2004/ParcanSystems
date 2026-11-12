@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.sistemparcan.entity.Solicitud;
 import com.sistemparcan.service.SolicitudService;
 
+// Endpoints para consultar y administrar solicitudes
 @Controller
 @RequestMapping("/api/solicitudes")
 public class SolicitudController {
@@ -27,12 +28,21 @@ public class SolicitudController {
         this.service = service;
     }
 
+    // Devuelve la lista completa de solicitudes
     @GetMapping
     @ResponseBody
     public ResponseEntity<List<Solicitud>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
+    // Lista solo las solicitudes activas para los desplegables
+    @GetMapping("/activas")
+    @ResponseBody
+    public ResponseEntity<List<Solicitud>> findActivas() {
+        return ResponseEntity.ok(service.findActivas());
+    }
+
+    // Busca una solicitud por su codigo
     @GetMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Solicitud> findById(@PathVariable Integer id) {
@@ -41,12 +51,14 @@ public class SolicitudController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Registra una solicitud nueva
     @PostMapping
     @ResponseBody
     public ResponseEntity<Solicitud> save(@RequestBody Solicitud entity) {
         return ResponseEntity.ok(service.save(entity));
     }
 
+    // Actualiza los datos de una solicitud
     @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Solicitud> update(@PathVariable Integer id, @RequestBody Solicitud entity) {
@@ -60,6 +72,7 @@ public class SolicitudController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Desactiva la solicitud sin borrarla de la base de datos
     @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Map<String, String>> deleteById(@PathVariable Integer id) {
@@ -67,6 +80,7 @@ public class SolicitudController {
         return ResponseEntity.ok(Map.of("mensaje", "Eliminado logicamente"));
     }
 
+    // Reactiva una solicitud desactivada
     @PostMapping("/{id}/restore")
     @ResponseBody
     public ResponseEntity<Map<String, String>> restoreById(@PathVariable Integer id) {

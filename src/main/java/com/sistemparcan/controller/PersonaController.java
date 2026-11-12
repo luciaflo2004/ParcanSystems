@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+// Endpoints para consultar y administrar personas y funcionarios
 @Controller
 @RequestMapping("/api/personas")
 public class PersonaController {
@@ -19,12 +20,21 @@ public class PersonaController {
         this.service = service;
     }
 
+    // Devuelve la lista completa de personas
     @GetMapping
     @ResponseBody
     public ResponseEntity<List<Persona>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
+    // Lista solo las personas activas para los desplegables
+    @GetMapping("/activas")
+    @ResponseBody
+    public ResponseEntity<List<Persona>> findActivas() {
+        return ResponseEntity.ok(service.findActivas());
+    }
+
+    // Busca una persona por su cedula
     @GetMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Persona> findById(@PathVariable Integer id) {
@@ -33,6 +43,7 @@ public class PersonaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Guarda una persona sin pasar por el registro unificado
     @PostMapping
     @ResponseBody
     public ResponseEntity<Persona> save(@RequestBody Persona entity) {
@@ -59,6 +70,7 @@ public class PersonaController {
         return ResponseEntity.ok(service.actualizar(id, entity));
     }
 
+    // Actualiza una persona sin pasar por el registro unificado
     @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Persona> update(@PathVariable Integer id, @RequestBody Persona entity) {
@@ -72,6 +84,7 @@ public class PersonaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Desactiva la persona sin borrarla de la base de datos
     @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Map<String, String>> deleteById(@PathVariable Integer id) {
@@ -79,6 +92,7 @@ public class PersonaController {
         return ResponseEntity.ok(Map.of("mensaje", "Eliminado logicamente"));
     }
 
+    // Reactiva la persona y su funcionario si existe
     @PostMapping("/{id}/restore")
     @ResponseBody
     public ResponseEntity<Map<String, String>> restoreById(@PathVariable Integer id) {

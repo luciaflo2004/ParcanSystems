@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+// Institucion eclesiastica que puede figurar como solicitante
 @Entity
 @Table(name = "Instituciones_Eclesiasticas")
 public class InstitucionEcclesiastica {

@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SystemParCan - Solicitudes</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
     <div class="main-content">
@@ -32,6 +32,7 @@
                     <!-- Desplegable de feligreses: se muestra solo al elegir Feligres -->
                     <div class="form-group hidden" id="feligres-group">
                         <label>Feligrés:</label>
+                        <input type="text" id="feligres-busqueda" placeholder="Buscar por nombre..." class="dropdown-search">
                         <div class="solicitante-row">
                             <select id="feligres-select"></select>
                             <button type="button" class="btn btn-outline" onclick="crearNuevaPersona()"><i class="fa-solid fa-plus"></i> Crear nuevo</button>
@@ -40,6 +41,7 @@
                     <!-- Desplegable de instituciones: se muestra solo al elegir Institución eclesiástica -->
                     <div class="form-group hidden" id="institucion-group">
                         <label>Institución eclesiástica:</label>
+                        <input type="text" id="institucion-busqueda" placeholder="Buscar por nombre..." class="dropdown-search">
                         <div class="solicitante-row">
                             <select id="institucion-select"></select>
                             <button type="button" class="btn btn-outline" onclick="crearNuevaInstitucion()"><i class="fa-solid fa-plus"></i> Crear nuevo</button>
@@ -80,7 +82,7 @@
             </div>
         </div>
     </div>
-    <script src="js/app.js?v=2"></script>
-    <script src="js/solicitudes.js?v=2"></script>
+    <script src="js/app.js?v=11"></script>
+    <script src="js/solicitudes.js?v=7"></script>
 </body>
 </html>

@@ -19,6 +19,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+// Solicitud de un servicio; puede tener un feligres o una institucion como solicitante
 @Entity
 @Table(name = "Solicitud")
 public class Solicitud {
@@ -41,6 +42,7 @@ public class Solicitud {
     @Column(name = "aprobada", nullable = true)
     private Boolean aprobada = false;
 
+    // Persona que realiza la solicitud como feligres
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Feligres_ciPersona")
     private Persona feligres;
@@ -51,6 +53,7 @@ public class Solicitud {
     @JoinColumn(name = "Institucion_idInstitucionEclesiastica")
     private InstitucionEcclesiastica institucion;
 
+    // Funcionario que tomo o registro la solicitud; puede quedar sin asignar
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Funcionario_ciPersona")
     @JsonIgnoreProperties({"servicios", "solicitudes"})

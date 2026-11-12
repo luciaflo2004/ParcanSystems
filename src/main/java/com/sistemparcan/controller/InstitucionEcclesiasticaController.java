@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.sistemparcan.entity.InstitucionEcclesiastica;
 import com.sistemparcan.service.InstitucionEcclesiasticaService;
 
+// Endpoints para consultar y administrar instituciones eclesiasticas
 @Controller
 @RequestMapping("/api/instituciones")
 public class InstitucionEcclesiasticaController {
@@ -27,12 +28,21 @@ public class InstitucionEcclesiasticaController {
         this.service = service;
     }
 
+    // Devuelve la lista completa de instituciones
     @GetMapping
     @ResponseBody
     public ResponseEntity<List<InstitucionEcclesiastica>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
+    // Lista solo las instituciones activas para los desplegables
+    @GetMapping("/activas")
+    @ResponseBody
+    public ResponseEntity<List<InstitucionEcclesiastica>> findActivas() {
+        return ResponseEntity.ok(service.findActivas());
+    }
+
+    // Busca una institucion por su identificador
     @GetMapping("/{id}")
     @ResponseBody
     public ResponseEntity<InstitucionEcclesiastica> findById(@PathVariable Integer id) {
@@ -41,12 +51,14 @@ public class InstitucionEcclesiasticaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Registra una institucion nueva
     @PostMapping
     @ResponseBody
     public ResponseEntity<InstitucionEcclesiastica> save(@RequestBody InstitucionEcclesiastica entity) {
         return ResponseEntity.ok(service.save(entity));
     }
 
+    // Actualiza los datos de una institucion
     @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<InstitucionEcclesiastica> update(@PathVariable Integer id, @RequestBody InstitucionEcclesiastica entity) {
@@ -60,6 +72,7 @@ public class InstitucionEcclesiasticaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Desactiva la institucion sin borrarla de la base de datos
     @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Map<String, String>> deleteById(@PathVariable Integer id) {
@@ -67,6 +80,7 @@ public class InstitucionEcclesiasticaController {
         return ResponseEntity.ok(Map.of("mensaje", "Eliminado logicamente"));
     }
 
+    // Reactiva una institucion desactivada
     @PostMapping("/{id}/restore")
     @ResponseBody
     public ResponseEntity<Map<String, String>> restoreById(@PathVariable Integer id) {

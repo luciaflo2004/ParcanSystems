@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SystemParCan - Registro de Usuario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css?v=10">
+</head>
+<body>
+    <div class="login-container">
+        <div class="card login-card">
+            <div class="login-brand">
+                <i class="fa-solid fa-place-of-worship"></i>
+                <h2>SystemParCan</h2>
+                <p>Parroquia de Katuete</p>
+            </div>
+            <h3>Registro de Usuario</h3>
+            <p>El registro está reservado a funcionarios activos registrados previamente.</p>
+            <!-- Mensaje de error o confirmación del registro -->
+            <div id="registro-message" class="alert-error hidden"></div>
+            <!-- Formulario que envia los datos al endpoint /api/registro -->
+            <form id="registro-form">
+                <div class="form-group"><label>Cédula del funcionario:</label><input type="text" name="ciFuncionario" id="ci-funcionario" required></div>
+                <div class="form-group"><label>Cargo:</label><select name="codCargo" id="cargo-select"></select></div>
+                <div class="form-group"><label>Usuario:</label><input type="text" name="usuario" id="usuario" required></div>
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <div class="solicitante-row">
+                        <input type="password" name="contrasena" id="contrasena" required autocomplete="new-password">
+                        <button type="button" class="btn btn-outline" onclick="togglePassword()" aria-label="Mostrar u ocultar contraseña" title="Mostrar u ocultar contraseña"><i class="fa-solid fa-eye" id="toggle-password-icon"></i></button>
+                    </div>
+                    <small class="password-hint">Utilice al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.</small>
+                </div>
+                <div class="form-group"><label>Confirmar contraseña:</label><input type="password" name="confirmacion" id="confirmacion" required></div>
+                <button type="submit" class="btn btn-primary login-submit"><i class="fa-solid fa-user-plus"></i> Crear cuenta</button>
+            </form>
+            <p class="login-registro">¿Ya tienes una cuenta? <a href="login.html">Iniciar sesión</a></p>
+        </div>
+    </div>
+    <script src="js/registro.js?v=1"></script>
+</body>
+</html>

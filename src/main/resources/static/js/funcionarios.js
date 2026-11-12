@@ -1,26 +1,35 @@
 // ====== Lógica de la interfaz de Funcionarios ======
 let funcionariosData = [];
 
-// Aplica filtros (texto, estado) y renderiza la tabla
+// Aplica filtros (texto, estado) y el orden seleccionado, luego renderiza la tabla
 function renderFuncionarios() {
     const texto = (document.getElementById('search-funcionarios').value || '').toLowerCase();
     const estadoF = document.getElementById('filtro-estado').value;
+    const direccion = document.getElementById('orden-funcionarios').value;
 
-    const rows = funcionariosData.filter(f => {
-        const bloque = [
-            String(f.ciPersona),
-            (f.persona ? (f.persona.nombrePersona || '') + ' ' + (f.persona.apellidoPersona || '') : ''),
-            (f.cargo ? f.cargo.descripcion : '')
-        ].join(' ').toLowerCase();
-        if (texto && !bloque.includes(texto)) return false;
-        const estado = f.eliminado ? 'inactivo' : 'activo';
-        if (estadoF !== 'todos' && estado !== estadoF) return false;
-        return true;
-    }).map(f => ({
+    // Orden alfabetico por el nombre de la persona; apellido e ID como desempate
+    const rows = ordenarAlfabeticamente(
+        funcionariosData.filter(f => {
+            const bloque = [
+                String(f.ciPersona),
+                (f.persona ? (f.persona.nombrePersona || '') + ' ' + (f.persona.apellidoPersona || '') : ''),
+                (f.cargo ? f.cargo.descripcion : '')
+            ].join(' ').toLowerCase();
+            if (texto && !bloque.includes(texto)) return false;
+            const estado = f.eliminado ? 'inactivo' : 'activo';
+            if (estadoF !== 'todos' && estado !== estadoF) return false;
+            return true;
+        }),
+        f => f.persona ? f.persona.nombrePersona : '',
+        f => f.persona ? f.persona.apellidoPersona : '',
+        f => f.ciPersona,
+        direccion
+    ).map(f => ({
         ciPersona: f.ciPersona,
         Persona: (f.persona ? (f.persona.nombrePersona || '') + ' ' + (f.persona.apellidoPersona || '') : ''),
         Cargo: (f.cargo ? f.cargo.descripcion : '-'),
-        Estado: f.eliminado ? 'Inactivo' : 'Activo'
+        Estado: f.eliminado ? 'Inactivo' : 'Activo',
+        _letra: letraInicial(f.persona ? f.persona.nombrePersona : '')
     }));
 
     renderTable('funcionarios-list', ['ciPersona','Persona','Cargo','Estado'], rows, (row) => {
@@ -31,7 +40,7 @@ function renderFuncionarios() {
             html += `<button class="btn btn-danger btn-sm" onclick="desactivarFuncionario(${row.ciPersona})"><i class="fa-solid fa-toggle-off"></i> Desactivar</button>`;
         }
         return html;
-    });
+    }, { indiceAlfabetico: true });
 }
 
 // Cargar la lista de funcionarios (global para refrescarla desde otras funciones)
@@ -44,6 +53,8 @@ async function loadFuncionarios() {
 function clearFiltrosFuncionarios() {
     document.getElementById('search-funcionarios').value = '';
     document.getElementById('filtro-estado').value = 'todos';
+    // Al limpiar se vuelve al orden predeterminado de A a la Z
+    document.getElementById('orden-funcionarios').value = '';
     renderFuncionarios();
 }
 
@@ -61,10 +72,12 @@ async function activarFuncionario(ci) {
     else showAlert('Error al activar el funcionario', 'error');
 }
 
+// Carga la lista y prepara los filtros de funcionarios
 document.addEventListener('DOMContentLoaded', async function() {
     loadFuncionarios();
     // Filtrar al escribir o cambiar seleccion
     document.getElementById('search-funcionarios').addEventListener('input', renderFuncionarios);
     document.getElementById('filtro-estado').addEventListener('change', renderFuncionarios);
+    document.getElementById('orden-funcionarios').addEventListener('change', renderFuncionarios);
 });
 

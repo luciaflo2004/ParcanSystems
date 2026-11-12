@@ -7,12 +7,13 @@ function renderRoles() {
     const texto = (document.getElementById('search-roles').value || '').toLowerCase();
     const estadoF = document.getElementById('filtro-estado').value;
 
-    const rows = rolesData.filter(r => {
+    // Ordena los roles por ID ascendente
+    const rows = ordenarPorId(rolesData.filter(r => {
         if (texto && !(r.descripcionRoll || '').toLowerCase().includes(texto)) return false;
         const estado = r.eliminado ? 'inactivo' : 'activo';
         if (estadoF !== 'todos' && estado !== estadoF) return false;
         return true;
-    }).map(r => ({
+    }), 'idRoles').map(r => ({
         ID: r.idRoles,
         Descripcion: r.descripcionRoll,
         Estado: r.eliminado ? 'Inactivo' : 'Activo'
@@ -39,19 +40,23 @@ function clearFiltrosRoles() {
     renderRoles();
 }
 
+// Carga los datos del rol seleccionado en el formulario
 function editarRol(id) {
     const r = rolesData.find(x => x.idRoles === id);
     if (!r) return;
     editingRol = id;
+    limpiarErroresFormulario(document.getElementById('rol-form'));
     document.getElementById('descripcionRoll').value = r.descripcionRoll || '';
     document.getElementById('form-title').textContent = 'Editar Rol';
     document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Actualizar';
     document.getElementById('rol-form').scrollIntoView({ behavior: 'smooth' });
 }
 
+// Limpia el formulario para registrar un rol nuevo
 function resetRolForm() {
     editingRol = null;
     document.getElementById('rol-form').reset();
+    limpiarErroresFormulario(document.getElementById('rol-form'));
     document.getElementById('form-title').textContent = 'Registrar Rol';
     document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
 }
@@ -76,8 +81,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('search-roles').addEventListener('input', renderRoles);
     document.getElementById('filtro-estado').addEventListener('change', renderRoles);
 
+    // Envia los datos del rol al backend
     document.getElementById('rol-form').addEventListener('submit', async function(e) {
         e.preventDefault();
+        const form = this;
+        limpiarErroresFormulario(form);
+        const errores = erroresValidacionNativa(form);
+        if (errores.length) {
+            mostrarErroresFormulario(form, errores);
+            return;
+        }
         const fd = new FormData(this);
         const obj = {};
         fd.forEach((v, k) => obj[k] = v);
@@ -88,6 +101,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             showAlert(editingRol ? 'Rol actualizado' : 'Rol registrado', 'success');
             this.reset();
             editingRol = null;
+            limpiarErroresFormulario(form);
             document.getElementById('form-title').textContent = 'Registrar Rol';
             document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
             loadRoles();

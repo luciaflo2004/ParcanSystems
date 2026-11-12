@@ -1,0 +1,19 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< com.sistemparcan:SistemParcan >--------------------
+[INFO] Building SistemParcan 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ SistemParcan ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 23 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.12.1:compile (default-compile) @ SistemParcan ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.952 s
+[INFO] Finished at: 2026-11-07T22:34:37-03:00
+[INFO] ------------------------------------------------------------------------
